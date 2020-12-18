@@ -15,7 +15,7 @@ ICON = os.path.join(SCRIPT_PATH, 'res/keyboard.png')
 
 # AT Translated Set 2 keyboard -> thinkpad internal keyboard
 # Topre Corporation Realforce  -> Realforce
-# P. I. Engineering XK-16 HID  -> https://www.amazon.com/gp/product/B00EZ4A2OQ
+# P. I. Engineering XK-16 HID  -> An external 8-key keyboards.
 DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforce|P. I. Engineering XK-16 HID)"
 
 debug = False
@@ -38,6 +38,7 @@ class Remapper(key_remapper.SimpleRemapper):
 
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
+            # These 8 keys send KEY_1 .. KEY_8.
             if ecodes.KEY_1 <= ev.code <= ecodes.KEY_8 and ev.value == 1:
                 self.press_key(ecodes.KEY_DELETE, 'cs')
             return
