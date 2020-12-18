@@ -1,6 +1,7 @@
 # key_remapper.py
 
-Python framework for AHK like flexible key-remapping for Linux.
+Python framework for creating flexible key-remapping for Linux.
+(In attempt to replicate AHK-like flexible remapping.)
 
 ## Prerequisite
 
@@ -38,3 +39,4 @@ with `-m ''`.
    - https://www.amazon.com/gp/product/B00EZ4A2OQ
 
  - [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
+ - [trackpoint-speedup.py](trackpoint-speedup.py) Speed up Thinkpad trackpoint.

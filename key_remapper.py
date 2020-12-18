@@ -88,7 +88,7 @@ class SyncedUinput:
         self.__lock = threading.RLock()
         self.__key_states = collections.defaultdict(int)
 
-    def write(self, events: Iterable[evdev.InputEvent]):
+    def write(self, *events: evdev.InputEvent):
         with self.__lock:
             last_event = None
             for ev in events:
@@ -295,7 +295,7 @@ class SimpleRemapper(BaseRemapper ):
                  match_non_keyboards = False,
                  grab_devices = True,
                  write_to_uinput = True,
-                 uinput_events: Optional[Dict[int, List[int]]] = None,
+                 uinput_events: Optional[Dict[int, Iterable[int]]] = None,
                  global_lock_name: str = os.path.basename(sys.argv[0]),
                  enable_debug = False,
                  force_quiet = False):
@@ -317,6 +317,7 @@ class SimpleRemapper(BaseRemapper ):
         self.__devices = {}
         self.tray_icon = RemapperTrayIcon(self.remapper_name, self.remapper_icon)
         self.__refresh_scheduled = False
+        self.__uinput_events = uinput_events
 
     def show_notification(self, message: str, timeout_ms=3000) -> None:
         if self.enable_debug: print(message)
@@ -534,6 +535,9 @@ class SimpleRemapper(BaseRemapper ):
 
         return True
 
+    def write_event(self, type: int, key: int, value: int) -> None:
+        self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
+
     def press_key_and_done(self, key: int, value: Union[int, str] =-1, *, reset_all_keys=True) -> None:
         self.press_key(key, value, reset_all_keys=reset_all_keys)
         raise DoneEvent()
@@ -545,15 +549,15 @@ class SimpleRemapper(BaseRemapper ):
         if value == -1:
             if reset_all_keys:
                 self.reset_all_keys()
-            self.uinput.write([
+            self.uinput.write(
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1),
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 0),
-            ])
+            )
         elif isinstance(value, int):
             # Intentionally not resetting in this case.
-            self.uinput.write([
+            self.uinput.write(
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value),
-            ])
+            )
         elif isinstance(value, str):
             if reset_all_keys:
                 self.reset_all_keys()
@@ -576,7 +580,7 @@ class SimpleRemapper(BaseRemapper ):
 
     def send_keys(self, keys: List[Tuple[int, int]]) -> None:
         for k in keys:
-            self.uinput.write([evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1])])
+            self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
 
     def get_out_key_state(self, key: int) -> int:
         return self.uinput.get_key_state(key)
@@ -666,7 +670,7 @@ class SimpleRemapper(BaseRemapper ):
 
         if self.write_to_uinput:
             # Create our /dev/uinput device.
-            uinput = UInput(name=UINPUT_DEVICE_NAME, events=self.uinput_events)
+            uinput = UInput(name=UINPUT_DEVICE_NAME, events=self.__uinput_events)
             if debug: print(f'# Uinput device name: {UINPUT_DEVICE_NAME}')
             self.uinput = SyncedUinput(uinput)
             add_at_exit(self.uinput.close)
