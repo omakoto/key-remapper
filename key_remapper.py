@@ -244,6 +244,8 @@ class BaseRemapper(object):
 
 
 def die_on_exception(func):
+    """Decoration to exit() the process when there's an unhandled exception.
+    """
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
@@ -269,8 +271,10 @@ class RemapperTrayIcon(TaskTrayIcon):
         call_at_exists()
         os.execv(sys.argv[0], sys.argv)
 
+
 class DoneEvent(Exception):
     pass
+
 
 class SimpleRemapper(BaseRemapper ):
     tray_icon: TaskTrayIcon

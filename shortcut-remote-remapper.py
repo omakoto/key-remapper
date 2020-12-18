@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+#
+# Remapper for https://www.amazon.com/gp/product/B01NC2LEYP
+#
 import collections
 import os
 import sys
@@ -112,22 +115,26 @@ class Remapper(key_remapper.SimpleRemapper):
 
     def handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type != ecodes.EV_KEY:
-            return
+            return # Ignore non-key events.
         if ev.code == ecodes.KEY_LEFTCTRL:
-            return  # ignore it
+            return  # There's a key that sends CTRL+Z. We just ignore the CTRL press and use 'z' only.
         if ev.value not in [0, 1]:
-            return
+            return # Ignore repeat events. (i.e. value == 2)
 
         key = self.get_current_mode()[ev.code][0]
+
         if key == 0:
-            self.show_help()
+            self.show_help() # show help upon unassigned key presses.
             return
 
+        # Handle mode change keys.
         if key <= 0:
             self.__mode = -key - 1
             self.show_help()
             return
 
+        # If HALF_TOGGLE is set, we send the key every time the value changes between 0 and 1.
+        # Otherwise, we send the key only when the key is pressed (i.e. value == 1).
         half_toggle = (key & HALF_TOGGLE) != 0
         key = key & ~HALF_TOGGLE
 
@@ -135,7 +142,6 @@ class Remapper(key_remapper.SimpleRemapper):
             self.press_key(key)
 
     def on_device_detected(self, devices: List[evdev.InputDevice]):
-        super().on_device_detected(devices)
         self.show_help()
 
     def on_init_arguments(self, parser):
