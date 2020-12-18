@@ -54,16 +54,20 @@ def exit(status_code):
     sys.exit(status_code)
 
 
-def ensure_singleton(global_lock_name, debug=False):
-    lockfile = f'/tmp/{global_lock_name}.lock'
+__singleton_lock_file = None # Store the file in it to prevent auto-closing.
+
+
+def ensure_singleton(global_lock_name):
+    file = f'/tmp/{global_lock_name}.lock'
     if debug:
-        print(f'Lockfile: {lockfile}')
+        print(f'Lockfile: {file}')
     try:
         os.umask(0o000)
-        lock = open(lockfile, 'w')
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        global __singleton_lock_file
+        __singleton_lock_file = open(file, 'w')
+        fcntl.flock(__singleton_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        raise SystemExit(f'Unable to obtain file lock {lockfile}. Previous process running.')
+        raise SystemExit(f'Unable to obtain file lock {file}. Previous process running.')
 
 
 def is_syn(ev: evdev.InputEvent) -> bool:
@@ -288,7 +292,7 @@ class SimpleRemapper(BaseRemapper ):
                  device_name_regex: str,
                  *,
                  id_regex = '',
-                 match_non_keyboards = True,
+                 match_non_keyboards = False,
                  grab_devices = True,
                  write_to_uinput = True,
                  uinput_events: Optional[Dict[int, List[int]]] = None,
@@ -655,7 +659,7 @@ class SimpleRemapper(BaseRemapper ):
         return True
 
     def main(self, args):
-        ensure_singleton(self.global_lock_name, debug=debug)
+        ensure_singleton(self.global_lock_name)
         notify2.init(self.remapper_name)
 
         self.__parse_args(args)

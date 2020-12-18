@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+#
+# Remapper for Topre Realfoce and the thinkpad internal keyboard.
+#
 import os
 import sys
 
@@ -10,6 +13,9 @@ NAME = "Main Keyboard Remapper"
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 ICON = os.path.join(SCRIPT_PATH, 'res/keyboard.png')
 
+# AT Translated Set 2 keyboard -> thinkpad internal keyboard
+# Topre Corporation Realforce  -> Realforce
+# P. I. Engineering XK-16 HID  -> https://www.amazon.com/gp/product/B00EZ4A2OQ
 DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforce|P. I. Engineering XK-16 HID)"
 
 debug = False
