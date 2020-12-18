@@ -117,7 +117,7 @@ class Remapper(key_remapper.SimpleRemapper):
         # Don't use capslock
         if ev.code == ecodes.KEY_CAPSLOCK: return # don't use capslock
 
-        self.uinput.write([InputEvent(0, 0, ecodes.EV_KEY, ev.code, ev.value)])
+        self.uinput.write(InputEvent(0, 0, ecodes.EV_KEY, ev.code, ev.value))
 
 
 def main(args):
