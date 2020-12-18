@@ -590,13 +590,13 @@ class SimpleRemapper(BaseRemapper ):
     def is_key_pressed(self, key: int) -> bool:
         return self.get_in_key_state(key) > 0
 
-    def check_modifiers(self, keys: str):
-        alt = 'a' in keys
-        ctrl = 'c' in keys
-        shift = 's' in keys
-        win = 'w' in keys
-        esc = 'e' in keys
-        caps = 'p' in keys
+    def check_modifiers(self, modifier_chars: str):
+        alt = 'a' in modifier_chars
+        ctrl = 'c' in modifier_chars
+        shift = 's' in modifier_chars
+        win = 'w' in modifier_chars
+        esc = 'e' in modifier_chars
+        caps = 'p' in modifier_chars
 
         if self.is_alt_pressed() != alt:
             return False

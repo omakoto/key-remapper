@@ -23,6 +23,7 @@ debug = False
 class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
+        self.pending_esc_press = False
 
     def is_chrome(self):
         active_window = self.get_active_window()
@@ -43,14 +44,38 @@ class Remapper(key_remapper.SimpleRemapper):
                 self.press_key(ecodes.KEY_DELETE, 'cs')
             return
 
-        # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
+        # Thinkpad only: Use ins/del as pageup/down, unless ESC is pressed.
         if is_thinkpad:
-            if ev.code == ecodes.KEY_INSERT and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEUP
-            elif ev.code == ecodes.KEY_DELETE and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEDOWN
+            if ev.code == ecodes.KEY_INSERT and not self.is_esc_pressed(): ev.code = ecodes.KEY_PAGEUP
+            elif ev.code == ecodes.KEY_DELETE and not self.is_esc_pressed(): ev.code = ecodes.KEY_PAGEDOWN
 
-        # Also shift or esc + backspace -> delete
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, 1, 's'): self.press_key(ecodes.KEY_DELETE, done=True)
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, 1, 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
+        # Special ESC handling: Don't send "ESC-press" at key-down, but instead send it on key-*up*, unless
+        # any keys are pressed between the down and up.
+        # This allows to make "ESC + BACKSPACE" act as a DEL press without sending ESC.
+        if ev.code == ecodes.KEY_ESC:
+            if ev.value == 1:
+                self.pending_esc_press = True
+            if ev.value in (1, 2):
+                return # Ignore ESC down.
+
+            # Here, value must be 0.
+            if self.pending_esc_press:
+                self.pending_esc_press = False
+                self.press_key(ecodes.KEY_ESC, reset_all_keys=False, done=True)
+        else:
+            # In order to allow combos like "ALT+ESC", don't clear pending ESC when modifier keys are pressed.
+            if ev.code not in (
+                    ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT,
+                    ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL,
+                    ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT,
+                    ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA,
+                    ecodes.KEY_CAPSLOCK
+            ):
+                self.pending_esc_press = False
+
+        # Shift or ESC + backspace -> delete
+        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
+        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
 
         # For chrome: -----------------------------------------------------------------------------------
         #  F5 -> back
@@ -76,12 +101,13 @@ class Remapper(key_remapper.SimpleRemapper):
         # ESC + space -> page up. (for chrome and also in-process browser, such as Markdown Preview in vs code)
         if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, done=True)
 
-        #  ESC + Pageup -> ctrl + pageup (prev tab)
-        #  ESC + Pagedown -> ctrl + pagedown (next tab)
+        # ESC + Pageup -> ctrl + pageup (prev tab)
+        # ESC + Pagedown -> ctrl + pagedown (next tab)
+        # (meaning ESC + ins/del act as them too on thinkpad.)
         if self.matches_key(ev, ecodes.KEY_PAGEUP, 1, 'e'): self.press_key(ecodes.KEY_PAGEUP, 'c', done=True)
         if self.matches_key(ev, ecodes.KEY_PAGEDOWN, 1, 'e'): self.press_key(ecodes.KEY_PAGEDOWN, 'c', done=True)
 
-        # esc + caps -> caps
+        # ESC + caps lock -> caps lock, in case I ever need it.
         if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'ep'): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
 
         # Don't use capslock
