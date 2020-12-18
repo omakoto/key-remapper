@@ -85,6 +85,10 @@ class Remapper(key_remapper.SimpleRemapper):
 
         # Global keys -----------------------------------------------------------------------------------
 
+        # ESC + F3 / F4 -> UP / DOWN
+        if self.matches_key(ev, ecodes.KEY_F3, (1, 2), 'e'): self.press_key(ecodes.KEY_UP, done=True)
+        if self.matches_key(ev, ecodes.KEY_F4, (1, 2), 'e'): self.press_key(ecodes.KEY_DOWN, done=True)
+
         # ESC + F11 -> CTRL+ATL+1 -> work.txt
         if self.matches_key(ev, ecodes.KEY_F11, 1, 'e'): self.press_key(ecodes.KEY_MINUS, 'ac', done=True)
 
