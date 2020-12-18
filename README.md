@@ -32,9 +32,9 @@ Note all the following samples will _remap only certain kinds of keyboards_ spec
 by the regex `DEFAULT_DEVICE_NAME` in them. To target all (keyboard) devices, start them
 with `-m ''`.
 
- - `main-keyboard-remapper.py` for the following 3 keyboards:
+ - [main-keyboard-remapper.py](main-keyboard-remapper.py) for the following 3 keyboards:
    - The Thinkpad Internal keyboard (at least for X1 carbon gen7 and P1 gen2)
    - Topre Realforce
    - https://www.amazon.com/gp/product/B00EZ4A2OQ
 
- - `shortcut-remote-remapper.py` for https://www.amazon.com/gp/product/B01NC2LEYP
+ - [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
