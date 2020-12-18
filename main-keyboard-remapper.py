@@ -44,10 +44,10 @@ class Remapper(key_remapper.SimpleRemapper):
                 self.press_key(ecodes.KEY_DELETE, 'cs')
             return
 
-        # Thinkpad only: Use ins/del as pageup/down, unless ESC is pressed.
+        # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
         if is_thinkpad:
-            if ev.code == ecodes.KEY_INSERT and not self.is_esc_pressed(): ev.code = ecodes.KEY_PAGEUP
-            elif ev.code == ecodes.KEY_DELETE and not self.is_esc_pressed(): ev.code = ecodes.KEY_PAGEDOWN
+            if ev.code == ecodes.KEY_INSERT and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEUP
+            elif ev.code == ecodes.KEY_DELETE and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEDOWN
 
         # Special ESC handling: Don't send "ESC-press" at key-down, but instead send it on key-*up*, unless
         # any keys are pressed between the down and up.
@@ -94,7 +94,7 @@ class Remapper(key_remapper.SimpleRemapper):
         # ESC + ENTER -> CTRL+ATL+1 -> chrome
         if self.matches_key(ev, ecodes.KEY_ENTER, 1, 'e'): self.press_key(ecodes.KEY_C, 'ac', done=True)
 
-        # ESC + home/end -> ATL+Left/Right (back / forwward)
+        # ESC + home/end -> ATL+Left/Right (back / forward)
         if self.matches_key(ev, ecodes.KEY_HOME, 1, 'e'): self.press_key(ecodes.KEY_LEFT, 'a', done=True)
         if self.matches_key(ev, ecodes.KEY_END, 1, 'e'): self.press_key(ecodes.KEY_RIGHT, 'a', done=True)
 
