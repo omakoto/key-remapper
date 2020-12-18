@@ -58,7 +58,7 @@ class Remapper(key_remapper.SimpleRemapper):
             if ev.value in (1, 2):
                 return # Ignore ESC down.
 
-            # Here, value must be 0.
+            # Here, ev.value must be 0.
             if self.pending_esc_press:
                 self.pending_esc_press = False
                 self.press_key(ecodes.KEY_ESC, reset_all_keys=False, done=True)
