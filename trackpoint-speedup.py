@@ -34,7 +34,9 @@ DEFAULT_DEVICE_NAME = "^TPPS/2 Elan TrackPoint"
 class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME,
-                         match_non_keyboards=True,
+                         match_non_keyboards=True, # Needed to read from non-keyboard devices.
+                         # By default, you can only allows to send EV_KEY w/ KEY_* and BTN_* events.
+                         # To send other events, you need to list all of them (including EV_KEY events) here.
                          uinput_events={
                              ecodes.EV_KEY: (ecodes.BTN_LEFT, ecodes.BTN_RIGHT, ecodes.BTN_MIDDLE),
                              ecodes.EV_REL: (ecodes.REL_X, ecodes.REL_Y),

@@ -364,7 +364,9 @@ class SimpleRemapper(BaseRemapper ):
     def __parse_args(self, args):
         parser = argparse.ArgumentParser(description=self.remapper_name)
         parser.add_argument('-m', '--match-device-name', metavar='D', default=self.device_name_regex,
-                            help='Use devices matching this regex')
+                            help='Select by device name using this regex. Use evtest(1) to list device names')
+        parser.add_argument('-i', '--match-id', metavar='D', default=self.id_regex,
+                            help='Select by vendor/product ID, in "vXXXX pXXXX" format, using this regex')
         parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
         parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode')
 
@@ -373,6 +375,7 @@ class SimpleRemapper(BaseRemapper ):
         args = parser.parse_args(args)
 
         self.device_name_regex = args.match_device_name
+        self.id_regex = args.match_id
         self.enable_debug = args.debug
         self.force_quiet = args.quiet
 
@@ -429,7 +432,7 @@ class SimpleRemapper(BaseRemapper ):
         if debug: print('# Detecting devices...')
 
         device_name_matcher = re.compile(self.device_name_regex)
-        id_matcher = re.compile(self.id_regex)
+        id_matcher = re.compile(self.id_regex, re.IGNORECASE)
 
         for device in [evdev.InputDevice(path) for path in sorted(evdev.list_devices())]:
             # Ignore uinput devices added after this instance.
