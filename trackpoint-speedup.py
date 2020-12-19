@@ -57,7 +57,7 @@ class Remapper(key_remapper.SimpleRemapper):
         self.power = args.power
         self.scale = args.scale
 
-    def handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
+    def on_handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type == ecodes.EV_REL:
             value = math.fabs(ev.value) - self.threshold
             if value < 1:

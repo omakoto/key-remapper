@@ -183,71 +183,6 @@ class TaskTrayIcon:
         glib.idle_add(inner)
 
 
-class BaseRemapper(object):
-    uinput: SyncedUinput
-
-    device_name_regex: str
-    id_regex: str
-
-    def __init__(self,
-                 device_name_regex: str,
-                 *,
-                 id_regex='',
-                 match_non_keyboards=False,
-                 grab_devices=True,
-                 write_to_uinput=True,
-                 uinput_events: Optional[Dict[int, List[int]]] = None,
-                 global_lock_name: str = os.path.basename(sys.argv[0]),
-                 enable_debug=False,
-                 force_quiet=False):
-        self.device_name_regex = device_name_regex
-        self.id_regex = id_regex
-        self.match_non_keyboards = match_non_keyboards
-        self.grab_devices = grab_devices
-        self.write_to_uinput = write_to_uinput
-        self.uinput_events = uinput_events
-        self.global_lock_name = global_lock_name
-        self.enable_debug = enable_debug
-        self.force_quiet = force_quiet
-
-    def on_initialize(self):
-        if debug:
-            print(f'on_initialize')
-
-    def handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]) -> None:
-        try:
-            for event in events:
-                try:
-                    self.handle_event(device, event)
-                except DoneEvent:
-                    pass
-        except DoneEvent:
-            pass
-
-    def handle_event(self, device: evdev.InputDevice, event: evdev.InputEvent) -> None:
-        pass
-
-    def on_device_detected(self, devices: List[evdev.InputDevice]):
-        if debug:
-            print(f'on_device_detected: {devices}')
-
-    def on_device_not_found(self):
-        if debug:
-            print('on_device_not_found')
-
-    def on_device_lost(self):
-        if debug:
-            print('on_device_lost:')
-
-    def on_exception(self, exception: BaseException):
-        if debug:
-            print(f'on_exception: {exception}')
-
-    def on_stop(self):
-        if debug:
-            print('on_stop:')
-
-
 def die_on_exception(func):
     """Decoration to exit() the process when there's an unhandled exception.
     """
@@ -282,7 +217,12 @@ class DoneEvent(Exception):
     pass
 
 
-class SimpleRemapper(BaseRemapper):
+class SimpleRemapper():
+    uinput: SyncedUinput
+
+    device_name_regex: str
+    id_regex: str
+
     tray_icon: TaskTrayIcon
     __devices: Dict[str, Tuple[evdev.InputDevice, int]]
     __orig_key_states: Dict[int, int] = collections.defaultdict(int)
@@ -299,19 +239,23 @@ class SimpleRemapper(BaseRemapper):
                  write_to_uinput=True,
                  uinput_events: Optional[Dict[int, Iterable[int]]] = None,
                  global_lock_name: str = os.path.basename(sys.argv[0]),
+                 uinput_device_name_suffix: str = "-" + os.path.basename(sys.argv[0]),
                  enable_debug=False,
                  force_quiet=False):
-        super().__init__(device_name_regex,
-                         id_regex=id_regex,
-                         match_non_keyboards=match_non_keyboards,
-                         grab_devices=grab_devices,
-                         write_to_uinput=write_to_uinput,
-                         uinput_events=uinput_events,
-                         global_lock_name=global_lock_name,
-                         enable_debug=enable_debug,
-                         force_quiet=force_quiet)
         self.remapper_name = remapper_name
         self.remapper_icon = remapper_icon
+
+        self.device_name_regex = device_name_regex
+        self.id_regex = id_regex
+        self.match_non_keyboards = match_non_keyboards
+        self.grab_devices = grab_devices
+        self.write_to_uinput = write_to_uinput
+        self.uinput_events = uinput_events
+        self.global_lock_name = global_lock_name
+        self.uinput_device_name_suffix = uinput_device_name_suffix
+        self.enable_debug = enable_debug
+        self.force_quiet = force_quiet
+
         self.__quiet = force_quiet
         self.__notification = notify2.Notification(remapper_name, '')
         self.__notification.set_urgency(notify2.URGENCY_NORMAL)
@@ -328,6 +272,9 @@ class SimpleRemapper(BaseRemapper):
         self.__notification.update(self.remapper_name, message)
         self.__notification.set_timeout(timeout_ms)
         self.__notification.show()
+
+    def on_initialize(self):
+        pass
 
     def on_device_detected(self, devices: List[evdev.InputDevice]):
         self.show_notification('Device connected:\n'
@@ -538,7 +485,7 @@ class SimpleRemapper(BaseRemapper):
                 print(f'-> Event: {ev}')
 
         try:
-            self.handle_events(device, events)
+            self.on_handle_events(device, events)
         except:
             traceback.print_exc()
             exit(1)
@@ -694,6 +641,19 @@ class SimpleRemapper(BaseRemapper):
 
         return True
 
+    def on_handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]) -> None:
+        try:
+            for event in events:
+                try:
+                    self.on_handle_event(device, event)
+                except DoneEvent:
+                    pass
+        except DoneEvent:
+            pass
+
+    def on_handle_event(self, device: evdev.InputDevice, event: evdev.InputEvent) -> None:
+        pass
+
     def main(self, args):
         ensure_singleton(self.global_lock_name)
         notify2.init(self.remapper_name)
@@ -702,7 +662,7 @@ class SimpleRemapper(BaseRemapper):
 
         if self.write_to_uinput:
             # Create our /dev/uinput device.
-            uinput = UInput(name=UINPUT_DEVICE_NAME, events=self.__uinput_events)
+            uinput = UInput(name=UINPUT_DEVICE_NAME + self.uinput_device_name_suffix , events=self.__uinput_events)
             if debug: print(f'# Uinput device name: {UINPUT_DEVICE_NAME}')
             self.uinput = SyncedUinput(uinput)
             add_at_exit(self.uinput.close)
@@ -725,7 +685,6 @@ class SimpleRemapper(BaseRemapper):
 
 def _main(args, description="key remapper test"):
     pass
-
 
 if __name__ == '__main__':
     _main(sys.argv[1:])

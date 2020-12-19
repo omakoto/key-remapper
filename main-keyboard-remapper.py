@@ -47,7 +47,7 @@ class Remapper(key_remapper.SimpleRemapper):
         cls = active_window[1]
         return cls == "Google-chrome"
 
-    def handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
+    def on_handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type != ecodes.EV_KEY:
             return
 

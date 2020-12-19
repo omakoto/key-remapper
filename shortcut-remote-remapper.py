@@ -113,7 +113,7 @@ class Remapper(key_remapper.SimpleRemapper):
 
         self.show_notification(help, timeout_ms=10000)
 
-    def handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
+    def on_handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type != ecodes.EV_KEY:
             return # Ignore non-key events.
         if ev.code == ecodes.KEY_LEFTCTRL:

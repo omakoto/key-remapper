@@ -86,7 +86,7 @@ class Remapper(key_remapper.SimpleRemapper):
 
         self.show_notification(help)
 
-    def handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
+    def on_handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
         for ev in events:
             if ev.type == ecodes.EV_KEY:
                 key = None

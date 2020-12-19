@@ -29,7 +29,7 @@ class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME, match_non_keyboards=True)
 
-    def handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
+    def on_handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
         for ev in events:
             if ev.type != ecodes.EV_KEY:
                 continue
