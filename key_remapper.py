@@ -662,7 +662,7 @@ class SimpleRemapper(BaseRemapper):
     def matches_key(self,
                     ev: evdev.InputEvent,
                     expected_keys: Union[int, Iterable[int]],
-                    expected_values: Union[int, Collection[int]],
+                    expected_values: Union[int, Iterable[int]],
                     expected_modifiers: Optional[str] = None,
                     predecate: Callable[[], bool] = None,
                     *, ignore_other_modifiers=False) -> bool:
@@ -673,12 +673,16 @@ class SimpleRemapper(BaseRemapper):
             if ev.code not in expected_keys:
                 return False
         else:
-            raise ValueError(f'Invalid type of expected_values: actual={expected_values}')
+            raise ValueError(f'Invalid type of expected_keys: actual={expected_keys}')
 
-        if isinstance(expected_values, int) and ev.value != expected_values:
-            return False
-        elif isinstance(expected_values, Iterable) and ev.value not in expected_values:
-            return False
+        if isinstance(expected_values, int):
+            if ev.value != expected_values:
+                return False
+        elif isinstance(expected_values, Iterable):
+            if ev.value not in expected_values:
+                return False
+        else:
+            raise ValueError(f'Invalid type of expected_values: actual={expected_values}')
 
         # If expected_modifiers is non-null, make sure these keys are pressed.
         if expected_modifiers:
