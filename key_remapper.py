@@ -32,7 +32,6 @@ quiet = False
 UINPUT_DEVICE_NAME_PREFIX = 'key-remapper-uinput-'
 UINPUT_DEVICE_NAME = f"{UINPUT_DEVICE_NAME_PREFIX}{int(time.time() * 1000) :020}-{random.randint(0, 1000000) :06}"
 
-
 # My own at-exit handling.
 _at_exists = []
 
@@ -54,7 +53,7 @@ def exit(status_code):
     sys.exit(status_code)
 
 
-__singleton_lock_file = None # Store the file in it to prevent auto-closing.
+__singleton_lock_file = None  # Store the file in it to prevent auto-closing.
 
 
 def ensure_singleton(global_lock_name):
@@ -177,8 +176,10 @@ class TaskTrayIcon:
 
     def set_icon(self, icon_path):
         self.icon_path = icon_path
+
         def inner():
             self.indicator.set_icon_full(self.icon_path, '')
+
         glib.idle_add(inner)
 
 
@@ -189,16 +190,16 @@ class BaseRemapper(object):
     id_regex: str
 
     def __init__(self,
-            device_name_regex: str,
-            *,
-            id_regex = '',
-            match_non_keyboards = False,
-            grab_devices = True,
-            write_to_uinput = True,
-            uinput_events: Optional[Dict[int, List[int]]] = None,
-            global_lock_name: str = os.path.basename(sys.argv[0]),
-            enable_debug = False,
-            force_quiet = False):
+                 device_name_regex: str,
+                 *,
+                 id_regex='',
+                 match_non_keyboards=False,
+                 grab_devices=True,
+                 write_to_uinput=True,
+                 uinput_events: Optional[Dict[int, List[int]]] = None,
+                 global_lock_name: str = os.path.basename(sys.argv[0]),
+                 enable_debug=False,
+                 force_quiet=False):
         self.device_name_regex = device_name_regex
         self.id_regex = id_regex
         self.match_non_keyboards = match_non_keyboards
@@ -250,6 +251,7 @@ class BaseRemapper(object):
 def die_on_exception(func):
     """Decoration to exit() the process when there's an unhandled exception.
     """
+
     def wrapper(*args, **kwargs):
         try:
             func(*args, **kwargs)
@@ -280,7 +282,7 @@ class DoneEvent(Exception):
     pass
 
 
-class SimpleRemapper(BaseRemapper ):
+class SimpleRemapper(BaseRemapper):
     tray_icon: TaskTrayIcon
     __devices: Dict[str, Tuple[evdev.InputDevice, int]]
     __orig_key_states: Dict[int, int] = collections.defaultdict(int)
@@ -291,14 +293,14 @@ class SimpleRemapper(BaseRemapper ):
                  remapper_icon: str,
                  device_name_regex: str,
                  *,
-                 id_regex = '',
-                 match_non_keyboards = False,
-                 grab_devices = True,
-                 write_to_uinput = True,
+                 id_regex='',
+                 match_non_keyboards=False,
+                 grab_devices=True,
+                 write_to_uinput=True,
                  uinput_events: Optional[Dict[int, Iterable[int]]] = None,
                  global_lock_name: str = os.path.basename(sys.argv[0]),
-                 enable_debug = False,
-                 force_quiet = False):
+                 enable_debug=False,
+                 force_quiet=False):
         super().__init__(device_name_regex,
                          id_regex=id_regex,
                          match_non_keyboards=match_non_keyboards,
@@ -347,7 +349,7 @@ class SimpleRemapper(BaseRemapper ):
     def on_arguments_parsed(self, args):
         pass
 
-    def get_active_window(self) -> Tuple[str, str, str]: # title, class_group_name, class_instance_name
+    def get_active_window(self) -> Tuple[str, str, str]:  # title, class_group_name, class_instance_name
         # Note: use `wmctrl -lx` to list window classes.
         # Example: For the following window,
         # 0x03a00007  0 www.amazon.co.jp__kindle-dbs_library_manga.Google-chrome  x1c7u マンガ本棚
@@ -421,10 +423,12 @@ class SimpleRemapper(BaseRemapper ):
             glib.source_remove(t[1])
             try:
                 t[0].ungrab()
-            except IOError: pass # ignore
+            except IOError:
+                pass  # ignore
             try:
                 t[0].close()
-            except IOError: pass # ignore
+            except IOError:
+                pass  # ignore
 
     def __open_devices(self):
         self.__release_devices()
@@ -472,7 +476,8 @@ class SimpleRemapper(BaseRemapper ):
             else:
                 try:
                     device.close()
-                except IOError: pass
+                except IOError:
+                    pass
                 continue
 
             tag = glib.io_add_watch(device, glib.IO_IN, self.__on_input_event)
@@ -504,9 +509,9 @@ class SimpleRemapper(BaseRemapper ):
         glib.timeout_add(random.uniform(1, 2) * 1000, call_refresh)
 
     # @die_on_exception
-    def __on_udev_event(self, udev_monitor: TextIO , condition):
+    def __on_udev_event(self, udev_monitor: TextIO, condition):
         refresh_devices = False
-        for event in udev_monitor.readlines(): # drain all the events
+        for event in udev_monitor.readlines():  # drain all the events
             if event in ['add', 'remove']:
                 if debug:
                     print('# Udev device change detected.')
@@ -541,11 +546,11 @@ class SimpleRemapper(BaseRemapper ):
     def write_event(self, type: int, key: int, value: int) -> None:
         self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
 
-    def press_key_and_done(self, key: int, value: Union[int, str] =-1, *, reset_all_keys=True) -> None:
+    def press_key_and_done(self, key: int, value: Union[int, str] = -1, *, reset_all_keys=True) -> None:
         self.press_key(key, value, reset_all_keys=reset_all_keys)
         raise DoneEvent()
 
-    def press_key(self, key: int, value: Union[int, str] =-1, *, reset_all_keys=True, done=False) -> None:
+    def press_key(self, key: int, value: Union[int, str] = -1, *, reset_all_keys=True, done=False) -> None:
         if debug:
             print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
 
@@ -644,11 +649,11 @@ class SimpleRemapper(BaseRemapper ):
         return self.is_key_pressed(ecodes.KEY_CAPSLOCK)
 
     def matches_key(self,
-            ev:evdev.InputEvent,
-            expected_key:int,
-            expected_values:Union[int, Collection[int]],
-            expected_modifiers:Optional[str] = None,
-            predecate:Callable[[], bool] = None) -> bool:
+                    ev: evdev.InputEvent,
+                    expected_key: int,
+                    expected_values: Union[int, Collection[int]],
+                    expected_modifiers: Optional[str] = None,
+                    predecate: Callable[[], bool] = None) -> bool:
         if ev.code != expected_key:
             return False
 
@@ -696,6 +701,7 @@ class SimpleRemapper(BaseRemapper ):
 
 def _main(args, description="key remapper test"):
     pass
+
 
 if __name__ == '__main__':
     _main(sys.argv[1:])
