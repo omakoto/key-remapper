@@ -86,10 +86,12 @@ class Remapper(key_remapper.SimpleRemapper):
         # Global keys -----------------------------------------------------------------------------------
 
         # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
-        if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e'): self.press_key(ecodes.KEY_LEFT, done=True)
-        if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e'): self.press_key(ecodes.KEY_DOWN, done=True)
-        if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e'): self.press_key(ecodes.KEY_UP, done=True)
-        if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e'): self.press_key(ecodes.KEY_RIGHT, done=True)
+        # Using is_esc_pressed with reset_all_keys, instead of 'e', allows to combine with other modifiers, such as
+        # SHIFT+ESC+K to extend the selection.
+        if self.matches_key(ev, ecodes.KEY_H, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_LEFT, reset_all_keys=False, done=True)
+        if self.matches_key(ev, ecodes.KEY_J, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_DOWN, reset_all_keys=False, done=True)
+        if self.matches_key(ev, ecodes.KEY_K, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_UP, reset_all_keys=False, done=True)
+        if self.matches_key(ev, ecodes.KEY_L, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_RIGHT, reset_all_keys=False, done=True)
 
         # ESC + F11 -> CTRL+ATL+1 -> work.txt
         if self.matches_key(ev, ecodes.KEY_F11, 1, 'e'): self.press_key(ecodes.KEY_MINUS, 'ac', done=True)
