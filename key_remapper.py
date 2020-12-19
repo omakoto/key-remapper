@@ -320,6 +320,8 @@ class SimpleRemapper(BaseRemapper):
         self.tray_icon = RemapperTrayIcon(self.remapper_name, self.remapper_icon)
         self.__refresh_scheduled = False
         self.__uinput_events = uinput_events
+        self.__modifier_char_validator = re.compile('''[^ascw]''')
+        self.__extended_modifier_char_validator = re.compile('''[^ascwes]''')
 
     def show_notification(self, message: str, timeout_ms=3000) -> None:
         if self.enable_debug: print(message)
@@ -556,6 +558,7 @@ class SimpleRemapper(BaseRemapper):
         # If modifier is "*", don't reset the key state, to allow combining with other modifiers.
         if modifiers == "*":
             reset_all_keys = False
+            modifiers = ""
 
         # Release all already-pressed modifier keys by default.
         if reset_all_keys:
@@ -563,6 +566,9 @@ class SimpleRemapper(BaseRemapper):
 
         if modifiers is None:
             modifiers = ""
+
+        if self.__modifier_char_validator.search(modifiers):
+            raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s and w.')
 
         # TODO Maybe remember the previous state and restore, rather than the current "reset -> press modifilers
         # and later release them all" strategy.
@@ -601,13 +607,19 @@ class SimpleRemapper(BaseRemapper):
     def is_key_pressed(self, key: int) -> bool:
         return self.get_in_key_state(key) > 0
 
-    def check_modifiers(self, modifier_chars: str, *, ignore_other_modifiers=False):
-        alt = 'a' in modifier_chars
-        ctrl = 'c' in modifier_chars
-        shift = 's' in modifier_chars
-        win = 'w' in modifier_chars
-        esc = 'e' in modifier_chars  # Allow ESC to be used as a modifier
-        caps = 'p' in modifier_chars # Allow CAPS to be used as a modifier
+    def check_modifiers(self, modifiers: str, *, ignore_other_modifiers=False):
+        if modifiers is None:
+            modifiers = ""
+
+        if self.__extended_modifier_char_validator.search(modifiers):
+            raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s, w, e and p.')
+
+        alt = 'a' in modifiers
+        ctrl = 'c' in modifiers
+        shift = 's' in modifiers
+        win = 'w' in modifiers
+        esc = 'e' in modifiers  # Allow ESC to be used as a modifier
+        caps = 'p' in modifiers # Allow CAPS to be used as a modifier
 
         if self.is_alt_pressed() != alt and (alt or not ignore_other_modifiers):
             return False
@@ -649,13 +661,19 @@ class SimpleRemapper(BaseRemapper):
 
     def matches_key(self,
                     ev: evdev.InputEvent,
-                    expected_key: int,
+                    expected_keys: Union[int, Iterable[int]],
                     expected_values: Union[int, Collection[int]],
                     expected_modifiers: Optional[str] = None,
                     predecate: Callable[[], bool] = None,
                     *, ignore_other_modifiers=False) -> bool:
-        if ev.code != expected_key:
-            return False
+        if isinstance(expected_keys, int):
+            if ev.code != expected_keys:
+                return False
+        elif isinstance(expected_keys, Iterable):
+            if ev.code not in expected_keys:
+                return False
+        else:
+            raise ValueError(f'Invalid type of expected_values: actual={expected_values}')
 
         if isinstance(expected_values, int) and ev.value != expected_values:
             return False

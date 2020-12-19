@@ -20,6 +20,22 @@ DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforc
 
 debug = False
 
+VERSATILE_KEYS = (
+    ecodes.KEY_F1,
+    ecodes.KEY_F2,
+    ecodes.KEY_F3,
+    ecodes.KEY_F4,
+    ecodes.KEY_F5,
+    ecodes.KEY_F6,
+    ecodes.KEY_F7,
+    ecodes.KEY_F8,
+    ecodes.KEY_F9,
+    ecodes.KEY_F10,
+    ecodes.KEY_F11,
+    ecodes.KEY_F12,
+    ecodes.KEY_ENTER,
+)
+
 
 class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
@@ -92,14 +108,8 @@ class Remapper(key_remapper.SimpleRemapper):
         if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, "*", done=True)
         if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, "*", done=True)
 
-        # ESC + F11 -> CTRL+ATL+1 -> work.txt
-        if self.matches_key(ev, ecodes.KEY_F11, 1, 'e'): self.press_key(ecodes.KEY_MINUS, 'ac', done=True)
-
-        # ESC + F12 -> CTRL+ATL+T -> terminal
-        if self.matches_key(ev, ecodes.KEY_F12, 1, 'e'): self.press_key(ecodes.KEY_T, 'ac', done=True)
-
-        # ESC + ENTER -> CTRL+ATL+1 -> chrome
-        if self.matches_key(ev, ecodes.KEY_ENTER, 1, 'e'): self.press_key(ecodes.KEY_C, 'ac', done=True)
+        # Convert ESC + Function key to ALT+SHIFT+CTRL+META + Function key, for versatile shortcuts.
+        if self.matches_key(ev, VERSATILE_KEYS, 1, 'e'): self.press_key(ev.code, 'acsw', done=True)
 
         # ESC + home/end -> ATL+Left/Right (back / forward)
         if self.matches_key(ev, ecodes.KEY_HOME, 1, 'e'): self.press_key(ecodes.KEY_LEFT, 'a', done=True)
@@ -117,7 +127,7 @@ class Remapper(key_remapper.SimpleRemapper):
         # ESC + caps lock -> caps lock, in case I ever need it.
         if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'ep'): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
 
-        # Don't use capslock
+        # Don't use capslock alone.
         if ev.code == ecodes.KEY_CAPSLOCK: return # don't use capslock
 
         self.write_key_event(ev.code, ev.value)
