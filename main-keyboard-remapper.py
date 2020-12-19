@@ -37,7 +37,7 @@ VERSATILE_KEYS = (
 )
 
 
-class Remapper(key_remapper.SimpleRemapper):
+class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
         self.pending_esc_press = False

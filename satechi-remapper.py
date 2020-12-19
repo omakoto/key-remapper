@@ -25,7 +25,7 @@ MAP = {
     ecodes.KEY_NEXTSONG: ecodes.KEY_RIGHT,
 }
 
-class Remapper(key_remapper.SimpleRemapper):
+class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME, match_non_keyboards=True)
 

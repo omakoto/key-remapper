@@ -96,7 +96,7 @@ SCROLL_MODE = collections.OrderedDict([
 ALL_MODES = [CURSOR_MODE, VOLUME_MODE, SCROLL_MODE]
 
 
-class Remapper(key_remapper.SimpleRemapper):
+class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
 

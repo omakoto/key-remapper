@@ -27,7 +27,7 @@ def get_next_key_mode(mode: int) -> int:
     return (mode + 1) % len(KEY_MODES)
 
 
-class Remapper(key_remapper.SimpleRemapper):
+class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
         self.__lock = threading.RLock()

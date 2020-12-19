@@ -31,7 +31,7 @@ DEFAULT_DEVICE_NAME = "^TPPS/2 Elan TrackPoint"
 #   Event code 1 (REL_Y)
 
 
-class Remapper(key_remapper.SimpleRemapper):
+class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME,
                          match_non_keyboards=True, # Needed to read from non-keyboard devices.

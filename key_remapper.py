@@ -217,7 +217,7 @@ class DoneEvent(Exception):
     pass
 
 
-class SimpleRemapper():
+class BaseRemapper():
     uinput: SyncedUinput
 
     __devices: Dict[str, Tuple[evdev.InputDevice, int]]
