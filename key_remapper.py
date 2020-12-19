@@ -546,17 +546,15 @@ class SimpleRemapper(BaseRemapper):
     def write_event(self, type: int, key: int, value: int) -> None:
         self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
 
-    def press_key_and_done(self, key: int, value: Union[int, str] = -1, *, reset_all_keys=True) -> None:
-        self.press_key(key, value, reset_all_keys=reset_all_keys)
-        raise DoneEvent()
-
     def press_key(self, key: int, value: Union[int, str] = -1, *, reset_all_keys=True, done=False) -> None:
         if debug:
             print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
 
+        # Release all already-pressed modifier keys by default.
+        if reset_all_keys:
+            self.reset_all_keys()
+
         if value == -1:
-            if reset_all_keys:
-                self.reset_all_keys()
             self.uinput.write(
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1),
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 0),
@@ -567,8 +565,6 @@ class SimpleRemapper(BaseRemapper):
                 evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value),
             )
         elif isinstance(value, str):
-            if reset_all_keys:
-                self.reset_all_keys()
             alt = 'a' in value
             ctrl = 'c' in value
             shift = 's' in value
@@ -602,30 +598,30 @@ class SimpleRemapper(BaseRemapper):
     def is_key_pressed(self, key: int) -> bool:
         return self.get_in_key_state(key) > 0
 
-    def check_modifiers(self, modifier_chars: str):
+    def check_modifiers(self, modifier_chars: str, *, ignore_other_modifiers=False):
         alt = 'a' in modifier_chars
         ctrl = 'c' in modifier_chars
         shift = 's' in modifier_chars
         win = 'w' in modifier_chars
-        esc = 'e' in modifier_chars
-        caps = 'p' in modifier_chars
+        esc = 'e' in modifier_chars  # Allow ESC to be used as a modifier
+        caps = 'p' in modifier_chars # Allow CAPS to be used as a modifier
 
-        if self.is_alt_pressed() != alt:
+        if self.is_alt_pressed() != alt and (alt or not ignore_other_modifiers):
             return False
 
-        if self.is_ctrl_pressed() != ctrl:
+        if self.is_ctrl_pressed() != ctrl and (ctrl or not ignore_other_modifiers):
             return False
 
-        if self.is_shift_pressed() != shift:
+        if self.is_shift_pressed() != shift and (shift or not ignore_other_modifiers):
             return False
 
-        if self.is_win_pressed() != win:
+        if self.is_win_pressed() != win and (win or not ignore_other_modifiers):
             return False
 
-        if self.is_esc_pressed() != esc:
+        if self.is_esc_pressed() != esc and (esc or not ignore_other_modifiers):
             return False
 
-        if self.is_caps_pressed() != caps:
+        if self.is_caps_pressed() != caps and (caps or not ignore_other_modifiers):
             return False
 
         return True
@@ -653,7 +649,8 @@ class SimpleRemapper(BaseRemapper):
                     expected_key: int,
                     expected_values: Union[int, Collection[int]],
                     expected_modifiers: Optional[str] = None,
-                    predecate: Callable[[], bool] = None) -> bool:
+                    predecate: Callable[[], bool] = None,
+                    *, ignore_other_modifiers=False) -> bool:
         if ev.code != expected_key:
             return False
 
@@ -662,8 +659,10 @@ class SimpleRemapper(BaseRemapper):
         elif isinstance(expected_values, Iterable) and ev.value not in expected_values:
             return False
 
-        if expected_modifiers is not None and not self.check_modifiers(expected_modifiers):
-            return False
+        # If expected_modifiers is non-null, make sure these keys are pressed.
+        if expected_modifiers:
+            if not self.check_modifiers(expected_modifiers, ignore_other_modifiers=ignore_other_modifiers):
+                return False
 
         if predecate and not predecate():
             return False

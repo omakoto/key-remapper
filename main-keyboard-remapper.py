@@ -39,9 +39,10 @@ class Remapper(key_remapper.SimpleRemapper):
 
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
-            # These 8 keys send KEY_1 .. KEY_8.
+            # These 8 keys send KEY_1 .. KEY_8 (per my configurtion).
+            # Convert them into Shift+Ctrl+KEY
             if ecodes.KEY_1 <= ev.code <= ecodes.KEY_8 and ev.value == 1:
-                self.press_key(ecodes.KEY_DELETE, 'cs')
+                self.press_key(ev.code, 'cs')
             return
 
         # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
@@ -74,8 +75,8 @@ class Remapper(key_remapper.SimpleRemapper):
                 self.pending_esc_press = False
 
         # Shift or ESC + backspace -> delete
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
         if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
+        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
 
         # For chrome: -----------------------------------------------------------------------------------
         #  F5 -> back
@@ -86,12 +87,11 @@ class Remapper(key_remapper.SimpleRemapper):
         # Global keys -----------------------------------------------------------------------------------
 
         # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
-        # Using is_esc_pressed with reset_all_keys, instead of 'e', allows to combine with other modifiers, such as
-        # SHIFT+ESC+K to extend the selection.
-        if self.matches_key(ev, ecodes.KEY_H, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_LEFT, reset_all_keys=False, done=True)
-        if self.matches_key(ev, ecodes.KEY_J, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_DOWN, reset_all_keys=False, done=True)
-        if self.matches_key(ev, ecodes.KEY_K, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_UP, reset_all_keys=False, done=True)
-        if self.matches_key(ev, ecodes.KEY_L, (1, 2), None, self.is_esc_pressed): self.press_key(ecodes.KEY_RIGHT, reset_all_keys=False, done=True)
+        # Use reset_all_keys to allows to combine with other modifiers, such as SHIFT+ESC+K to extend the selection.
+        if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, reset_all_keys=True, done=True)
+        if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, reset_all_keys=True, done=True)
+        if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, reset_all_keys=True, done=True)
+        if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, reset_all_keys=True, done=True)
 
         # ESC + F11 -> CTRL+ATL+1 -> work.txt
         if self.matches_key(ev, ecodes.KEY_F11, 1, 'e'): self.press_key(ecodes.KEY_MINUS, 'ac', done=True)
@@ -107,7 +107,7 @@ class Remapper(key_remapper.SimpleRemapper):
         if self.matches_key(ev, ecodes.KEY_END, 1, 'e'): self.press_key(ecodes.KEY_RIGHT, 'a', done=True)
 
         # ESC + space -> page up. (for chrome and also in-process browser, such as Markdown Preview in vs code)
-        if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, done=True)
+        if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, reset_all_keys=True, done=True)
 
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
