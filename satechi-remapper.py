@@ -27,7 +27,7 @@ MAP = {
 
 class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
-        super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
+        super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME, match_non_keyboards=True)
 
     def handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
         for ev in events:
