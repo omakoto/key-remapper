@@ -546,39 +546,42 @@ class SimpleRemapper(BaseRemapper):
     def write_event(self, type: int, key: int, value: int) -> None:
         self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
 
-    def press_key(self, key: int, value: Union[int, str] = -1, *, reset_all_keys=True, done=False) -> None:
+    def write_key_event(self, key: int, value: int) -> None:
+        self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value))
+
+    def press_key(self, key: int, modifiers:str=None, *, reset_all_keys=True, done=False) -> None:
         if debug:
             print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
+
+        # If modifier is "*", don't reset the key state, to allow combining with other modifiers.
+        if modifiers == "*":
+            reset_all_keys = False
 
         # Release all already-pressed modifier keys by default.
         if reset_all_keys:
             self.reset_all_keys()
 
-        if value == -1:
-            self.uinput.write(
-                evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1),
-                evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 0),
-            )
-        elif isinstance(value, int):
-            # Intentionally not resetting in this case.
-            self.uinput.write(
-                evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value),
-            )
-        elif isinstance(value, str):
-            alt = 'a' in value
-            ctrl = 'c' in value
-            shift = 's' in value
-            win = 'w' in value
+        if modifiers is None:
+            modifiers = ""
 
-            if alt: self.press_key(ecodes.KEY_LEFTALT, 1, reset_all_keys=False)
-            if ctrl: self.press_key(ecodes.KEY_LEFTCTRL, 1, reset_all_keys=False)
-            if shift: self.press_key(ecodes.KEY_LEFTSHIFT, 1, reset_all_keys=False)
-            if win: self.press_key(ecodes.KEY_LEFTMETA, 1, reset_all_keys=False)
-            self.press_key(key, reset_all_keys=False)
-            if win: self.press_key(ecodes.KEY_LEFTMETA, 0, reset_all_keys=False)
-            if shift: self.press_key(ecodes.KEY_LEFTSHIFT, 0, reset_all_keys=False)
-            if ctrl: self.press_key(ecodes.KEY_LEFTCTRL, 0, reset_all_keys=False)
-            if alt: self.press_key(ecodes.KEY_LEFTALT, 0, reset_all_keys=False)
+        # TODO Maybe remember the previous state and restore, rather than the current "reset -> press modifilers
+        # and later release them all" strategy.
+        alt = 'a' in modifiers
+        ctrl = 'c' in modifiers
+        shift = 's' in modifiers
+        win = 'w' in modifiers
+
+        if alt: self.write_key_event(ecodes.KEY_LEFTALT, 1)
+        if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 1)
+        if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 1)
+        if win: self.write_key_event(ecodes.KEY_LEFTMETA, 1)
+        self.write_key_event(key, 1)
+        self.write_key_event(key, 0)
+        if win: self.write_key_event(ecodes.KEY_LEFTMETA, 0)
+        if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 0)
+        if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 0)
+        if alt: self.write_key_event(ecodes.KEY_LEFTALT, 0)
+
         if done:
             raise DoneEvent()
 

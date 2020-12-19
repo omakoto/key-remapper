@@ -7,7 +7,7 @@ import sys
 from typing import List
 
 import evdev
-from evdev import ecodes, InputEvent
+from evdev import ecodes
 
 import key_remapper
 
@@ -29,19 +29,13 @@ class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
 
-    def send_modifiers(self, val):
-        self.uinput.write([
-            InputEvent(0, 0, ecodes.EV_KEY, ecodes.KEY_LEFTCTRL, val),
-            InputEvent(0, 0, ecodes.EV_KEY, ecodes.KEY_LEFTSHIFT, val),
-        ])
-
     def handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]):
         for ev in events:
             if ev.type != ecodes.EV_KEY:
                 continue
 
             key = MAP[ev.code]
-            self.uinput.write([InputEvent(0, 0, ecodes.EV_KEY, key, ev.value)])
+            self.write_key_event(key, ev.value)
 
 
 def main(args):

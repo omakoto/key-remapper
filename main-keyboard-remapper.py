@@ -20,6 +20,7 @@ DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforc
 
 debug = False
 
+
 class Remapper(key_remapper.SimpleRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
@@ -57,7 +58,7 @@ class Remapper(key_remapper.SimpleRemapper):
             if ev.value == 1:
                 self.pending_esc_press = True
             if ev.value in (1, 2):
-                return # Ignore ESC down.
+                return  # Ignore ESC down.
 
             # Here, ev.value must be 0.
             if self.pending_esc_press:
@@ -74,9 +75,8 @@ class Remapper(key_remapper.SimpleRemapper):
             ):
                 self.pending_esc_press = False
 
-        # Shift or ESC + backspace -> delete
+        # ESC + backspace -> delete
         if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
 
         # For chrome: -----------------------------------------------------------------------------------
         #  F5 -> back
@@ -87,11 +87,10 @@ class Remapper(key_remapper.SimpleRemapper):
         # Global keys -----------------------------------------------------------------------------------
 
         # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
-        # Use reset_all_keys to allows to combine with other modifiers, such as SHIFT+ESC+K to extend the selection.
-        if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, reset_all_keys=True, done=True)
-        if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, reset_all_keys=True, done=True)
-        if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, reset_all_keys=True, done=True)
-        if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, reset_all_keys=True, done=True)
+        if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, "*", done=True)
+        if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, "*", done=True)
+        if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, "*", done=True)
+        if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, "*", done=True)
 
         # ESC + F11 -> CTRL+ATL+1 -> work.txt
         if self.matches_key(ev, ecodes.KEY_F11, 1, 'e'): self.press_key(ecodes.KEY_MINUS, 'ac', done=True)
@@ -107,7 +106,7 @@ class Remapper(key_remapper.SimpleRemapper):
         if self.matches_key(ev, ecodes.KEY_END, 1, 'e'): self.press_key(ecodes.KEY_RIGHT, 'a', done=True)
 
         # ESC + space -> page up. (for chrome and also in-process browser, such as Markdown Preview in vs code)
-        if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, reset_all_keys=True, done=True)
+        if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, done=True)
 
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
@@ -121,7 +120,7 @@ class Remapper(key_remapper.SimpleRemapper):
         # Don't use capslock
         if ev.code == ecodes.KEY_CAPSLOCK: return # don't use capslock
 
-        self.uinput.write(InputEvent(0, 0, ecodes.EV_KEY, ev.code, ev.value))
+        self.write_key_event(ev.code, ev.value)
 
 
 def main(args):
