@@ -118,8 +118,6 @@ class Remapper(key_remapper.SimpleRemapper):
             return # Ignore non-key events.
         if ev.code == ecodes.KEY_LEFTCTRL:
             return  # There's a key that sends CTRL+Z. We just ignore the CTRL press and use 'z' only.
-        if ev.value not in [0, 1]:
-            return # Ignore repeat events. (i.e. value == 2)
 
         key = self.get_current_mode()[ev.code][0]
 
@@ -138,7 +136,7 @@ class Remapper(key_remapper.SimpleRemapper):
         half_toggle = (key & HALF_TOGGLE) != 0
         key = key & ~HALF_TOGGLE
 
-        if half_toggle or ev.value == 1:
+        if half_toggle or ev.value > 0:
             self.press_key(key)
 
     def on_device_detected(self, devices: List[evdev.InputDevice]):
