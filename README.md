@@ -5,33 +5,39 @@ Python framework for creating flexible key-remapping for Linux.
 
 ## Prerequisite
 
+### Being able to `/dev/uinput`
+
+- See https://stackoverflow.com/questions/11939255/writing-to-dev-uinput-on-ubuntu-12-04.
+
+- You may need to do the `/etc/modules-load.d/uinput.conf` trick in
+https://github.com/chrippa/ds4drv/issues/93#issuecomment-265300511 as well.
+
+### Python modules
+
 ```
 pip3 install evdev notify2
 ```
-... And more?
+... and probably some more modules for GTK etc?
 
 ## What It Provides
 
-It provides the following features:
-- "Steal" input events from keyboards,
-  and optionally pointing devices if `match_non_keyboards` is set to `True`.
-  (See [trackpoint-speedup.py](trackpoint-speedup.py) as an example of tweaking a pointing device.)
-
-  "Steal" means all the events from the target devices _will be ignored unless you forward
-  them to uinput_ using the following feature.
-  
-  Optionally, pass `False` to `grab_devices` to avoid this stealing behavior, which still
-  allows you to sniff into the input events.
-
-- Synthesize input device events (key presses, mouse moves, etc) via uinput.
-
-- `SimpleRemapper.get_active_window()` returns the information about the active window.
-
-- Simple tasktray icon.
+At a high level, it allows to "steal" input events from specific devices
+(keyboards, pointing devices, etc) using evdev, modify them and inject using `/dev/uinput`.
 
 - Unlike AHK, key_remapper can operate only on specific devices, specified by names or vendor/product IDs, using
   regexes. It allows to handle different devices in different ways. (e.g. use different mappings for diffetent
   devices.)
+
+- By default, it ignores all non-keyboard input devices.
+  Pass `True` to `match_non_keyboards` to use non-keyboard devices too.
+  See [trackpoint-speedup.py](trackpoint-speedup.py) as an example of
+  tweaking pointing device events.
+
+- Optionally, pass `False` to `grab_devices` to avoid this stealing behavior, which still
+  allows you to sniff into the input events.
+
+- Use `SimpleRemapper.get_active_window()` returns the information about the active window
+  to change behavior depending on the current window.
 
 ## Samples
  
@@ -47,3 +53,8 @@ use the `-i` option.
 
  - [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
  - [trackpoint-speedup.py](trackpoint-speedup.py) Speed up Thinkpad trackpoint.
+ 
+ ## See Also
+ 
+ - [python-evdev](https://python-evdev.readthedocs.io/en/latest/)
+ 
