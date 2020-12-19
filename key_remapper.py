@@ -220,10 +220,6 @@ class DoneEvent(Exception):
 class SimpleRemapper():
     uinput: SyncedUinput
 
-    device_name_regex: str
-    id_regex: str
-
-    tray_icon: TaskTrayIcon
     __devices: Dict[str, Tuple[evdev.InputDevice, int]]
     __orig_key_states: Dict[int, int] = collections.defaultdict(int)
     __udev_monitor: Optional[TextIO]
@@ -256,10 +252,8 @@ class SimpleRemapper():
         self.enable_debug = enable_debug
         self.force_quiet = force_quiet
 
-        self.__quiet = force_quiet
         self.__notification = notify2.Notification(remapper_name, '')
         self.__notification.set_urgency(notify2.URGENCY_NORMAL)
-        self.__mode = 0
         self.__devices = {}
         self.tray_icon = RemapperTrayIcon(self.remapper_name, self.remapper_icon)
         self.__refresh_scheduled = False
