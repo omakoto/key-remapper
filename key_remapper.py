@@ -32,6 +32,9 @@ quiet = False
 UINPUT_DEVICE_NAME_PREFIX = 'key-remapper-uinput-'
 UINPUT_DEVICE_NAME = f"{UINPUT_DEVICE_NAME_PREFIX}{int(time.time() * 1000) :020}-{random.randint(0, 1000000) :06}"
 
+
+MAIN_FILE_NANE = re.sub('''\..*?$''', "", os.path.basename(sys.argv[0]))
+
 # My own at-exit handling.
 _at_exists = []
 
@@ -234,8 +237,8 @@ class BaseRemapper():
                  grab_devices=True,
                  write_to_uinput=True,
                  uinput_events: Optional[Dict[int, Iterable[int]]] = None,
-                 global_lock_name: str = os.path.basename(sys.argv[0]),
-                 uinput_device_name_suffix: str = "-" + os.path.basename(sys.argv[0]),
+                 global_lock_name: str = MAIN_FILE_NANE,
+                 uinput_device_name_suffix: str = "-" + MAIN_FILE_NANE,
                  enable_debug=False,
                  force_quiet=False):
         self.remapper_name = remapper_name
@@ -288,12 +291,6 @@ class BaseRemapper():
     def on_stop(self):
         self.show_notification('Closing...')
 
-    def on_init_arguments(self, parser):
-        pass
-
-    def on_arguments_parsed(self, args):
-        pass
-
     def get_active_window(self) -> Tuple[str, str, str]:  # title, class_group_name, class_instance_name
         # Note: use `wmctrl -lx` to list window classes.
         # Example: For the following window,
@@ -307,30 +304,6 @@ class BaseRemapper():
         w = screen.get_active_window()
 
         return (w.get_name(), w.get_class_group_name(), w.get_class_instance_name())
-
-    def __parse_args(self, args):
-        parser = argparse.ArgumentParser(description=self.remapper_name)
-        parser.add_argument('-m', '--match-device-name', metavar='D', default=self.device_name_regex,
-                            help='Select by device name using this regex. Use evtest(1) to list device names')
-        parser.add_argument('-i', '--match-id', metavar='D', default=self.id_regex,
-                            help='Select by vendor/product ID, in "vXXXX pXXXX" format, using this regex')
-        parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
-        parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode')
-
-        self.on_init_arguments(parser)
-
-        args = parser.parse_args(args)
-
-        self.device_name_regex = args.match_device_name
-        self.id_regex = args.match_id
-        self.enable_debug = args.debug
-        self.force_quiet = args.quiet
-
-        global debug, quiet
-        debug = self.enable_debug
-        quiet = self.force_quiet
-
-        self.on_arguments_parsed(args)
 
     def __start_udev_monitor(self):
         pr, pw = os.pipe()
@@ -663,6 +636,36 @@ class BaseRemapper():
             pass
 
     def on_handle_event(self, device: evdev.InputDevice, event: evdev.InputEvent) -> None:
+        pass
+
+    def __parse_args(self, args):
+        parser = argparse.ArgumentParser(description=self.remapper_name)
+        parser.add_argument('-m', '--match-device-name', metavar='D', default=self.device_name_regex,
+                            help='Select by device name using this regex. Use evtest(1) to list device names')
+        parser.add_argument('-i', '--match-id', metavar='D', default=self.id_regex,
+                            help='Select by vendor/product ID, in "vXXXX pXXXX" format, using this regex')
+        parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
+        parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode')
+
+        self.on_init_arguments(parser)
+
+        args = parser.parse_args(args)
+
+        self.device_name_regex = args.match_device_name
+        self.id_regex = args.match_id
+        self.enable_debug = args.debug
+        self.force_quiet = args.quiet
+
+        global debug, quiet
+        debug = self.enable_debug
+        quiet = self.force_quiet
+
+        self.on_arguments_parsed(args)
+
+    def on_init_arguments(self, parser):
+        pass
+
+    def on_arguments_parsed(self, args):
         pass
 
     def main(self, args):

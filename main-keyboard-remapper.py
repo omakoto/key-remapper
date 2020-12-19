@@ -91,8 +91,9 @@ class Remapper(key_remapper.BaseRemapper):
             ):
                 self.pending_esc_press = False
 
-        # ESC + backspace -> delete
+        # ESC (or shift) + backspace -> delete
         if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
+        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
 
         # For chrome: -----------------------------------------------------------------------------------
         #  F5 -> back
