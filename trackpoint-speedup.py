@@ -48,25 +48,30 @@ class Remapper(key_remapper.SimpleRemapper):
     def on_init_arguments(self, parser):
         parser.add_argument('--threshold', type=int, default=2, metavar='T')
         parser.add_argument('--add', type=float, default=2, metavar='V')
-        parser.add_argument('--power', type=float, default=2, metavar='P')
+        parser.add_argument('--power', type=float, default=2.5, metavar='P')
+        parser.add_argument('--scale', type=float, default=5, metavar='S')
 
     def on_arguments_parsed(self, args):
         self.threshold = args.threshold
         self.add = args.add
         self.power = args.power
+        self.scale = args.scale
 
     def handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type == ecodes.EV_REL:
             value = math.fabs(ev.value) - self.threshold
             if value < 1:
-                value = 1
+                value = ev.value
             else:
-                value = value + self.add
-                value = math.pow(value, self.power)
+                value = (value + self.add) / self.scale
+                value = (math.pow(1 + value, self.power) - 1) * self.scale
                 value = value + self.threshold
 
-            if ev.value < 0:
-                value = -value
+                if ev.value < 0:
+                    value = -value
+
+            if self.enable_debug:
+                print(f'{ev.code}: {ev.value} -> {value}')
 
             ev.value = int(value)
 
