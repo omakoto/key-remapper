@@ -125,7 +125,7 @@ class Remapper(key_remapper.SimpleRemapper):
         if self.matches_key(ev, ecodes.KEY_PAGEDOWN, 1, 'e'): self.press_key(ecodes.KEY_PAGEDOWN, 'c', done=True)
 
         # ESC + caps lock -> caps lock, in case I ever need it.
-        if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'ep'): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
+        if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
 
         # Don't use capslock alone.
         if ev.code == ecodes.KEY_CAPSLOCK: return # don't use capslock

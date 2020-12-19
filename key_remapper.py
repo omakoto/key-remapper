@@ -267,6 +267,8 @@ class SimpleRemapper():
         self.__modifier_char_validator = re.compile('''[^ascw]''')
         self.__extended_modifier_char_validator = re.compile('''[^ascwes]''')
 
+        self.__lock = threading.RLock()
+
     def show_notification(self, message: str, timeout_ms=3000) -> None:
         if self.enable_debug: print(message)
         self.__notification.update(self.remapper_name, message)
@@ -478,7 +480,8 @@ class SimpleRemapper():
         events = []
         for ev in device.read():
             events.append(ev)
-            self.__orig_key_states[ev.code] = ev.value
+            with self.__lock:
+                self.__orig_key_states[ev.code] = ev.value
 
         if debug:
             for ev in events:
@@ -493,54 +496,58 @@ class SimpleRemapper():
         return True
 
     def write_event(self, type: int, key: int, value: int) -> None:
-        self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
+        with self.__lock:
+            self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
 
     def write_key_event(self, key: int, value: int) -> None:
-        self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value))
+        with self.__lock:
+            self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value))
 
     def press_key(self, key: int, modifiers:str=None, *, reset_all_keys=True, done=False) -> None:
-        if debug:
-            print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
+        with self.__lock:
+            if debug:
+                print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
 
-        # If modifier is "*", don't reset the key state, to allow combining with other modifiers.
-        if modifiers == "*":
-            reset_all_keys = False
-            modifiers = ""
+            # If modifier is "*", don't reset the key state, to allow combining with other modifiers.
+            if modifiers == "*":
+                reset_all_keys = False
+                modifiers = ""
 
-        # Release all already-pressed modifier keys by default.
-        if reset_all_keys:
-            self.reset_all_keys()
+            # Release all already-pressed modifier keys by default.
+            if reset_all_keys:
+                self.reset_all_keys()
 
-        if modifiers is None:
-            modifiers = ""
+            if modifiers is None:
+                modifiers = ""
 
-        if self.__modifier_char_validator.search(modifiers):
-            raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s and w.')
+            if self.__modifier_char_validator.search(modifiers):
+                raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s and w.')
 
-        # TODO Maybe remember the previous state and restore, rather than the current "reset -> press modifilers
-        # and later release them all" strategy.
-        alt = 'a' in modifiers
-        ctrl = 'c' in modifiers
-        shift = 's' in modifiers
-        win = 'w' in modifiers
+            # TODO Maybe remember the previous state and restore, rather than the current "reset -> press modifilers
+            # and later release them all" strategy.
+            alt = 'a' in modifiers
+            ctrl = 'c' in modifiers
+            shift = 's' in modifiers
+            win = 'w' in modifiers
 
-        if alt: self.write_key_event(ecodes.KEY_LEFTALT, 1)
-        if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 1)
-        if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 1)
-        if win: self.write_key_event(ecodes.KEY_LEFTMETA, 1)
-        self.write_key_event(key, 1)
-        self.write_key_event(key, 0)
-        if win: self.write_key_event(ecodes.KEY_LEFTMETA, 0)
-        if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 0)
-        if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 0)
-        if alt: self.write_key_event(ecodes.KEY_LEFTALT, 0)
+            if alt: self.write_key_event(ecodes.KEY_LEFTALT, 1)
+            if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 1)
+            if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 1)
+            if win: self.write_key_event(ecodes.KEY_LEFTMETA, 1)
+            self.write_key_event(key, 1)
+            self.write_key_event(key, 0)
+            if win: self.write_key_event(ecodes.KEY_LEFTMETA, 0)
+            if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 0)
+            if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 0)
+            if alt: self.write_key_event(ecodes.KEY_LEFTALT, 0)
 
-        if done:
-            raise DoneEvent()
+            if done:
+                raise DoneEvent()
 
     def send_keys(self, keys: List[Tuple[int, int]]) -> None:
-        for k in keys:
-            self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
+        with self.__lock:
+            for k in keys:
+                self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
 
     def get_out_key_state(self, key: int) -> int:
         return self.uinput.get_key_state(key)
@@ -549,62 +556,71 @@ class SimpleRemapper():
         self.uinput.reset()
 
     def get_in_key_state(self, key: int) -> int:
-        return self.__orig_key_states[key]
+        with self.__lock:
+            return self.__orig_key_states[key]
 
     def is_key_pressed(self, key: int) -> bool:
-        return self.get_in_key_state(key) > 0
+        with self.__lock:
+            return self.get_in_key_state(key) > 0
 
     def check_modifiers(self, modifiers: str, *, ignore_other_modifiers=False):
-        if modifiers is None:
-            modifiers = ""
+        with self.__lock:
+            if modifiers is None:
+                modifiers = ""
 
-        if self.__extended_modifier_char_validator.search(modifiers):
-            raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s, w, e and p.')
+            if self.__extended_modifier_char_validator.search(modifiers):
+                raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s, w, e and p.')
 
-        alt = 'a' in modifiers
-        ctrl = 'c' in modifiers
-        shift = 's' in modifiers
-        win = 'w' in modifiers
-        esc = 'e' in modifiers  # Allow ESC to be used as a modifier
-        caps = 'p' in modifiers # Allow CAPS to be used as a modifier
+            alt = 'a' in modifiers
+            ctrl = 'c' in modifiers
+            shift = 's' in modifiers
+            win = 'w' in modifiers
+            esc = 'e' in modifiers  # Allow ESC to be used as a modifier
+            caps = 'p' in modifiers # Allow CAPS to be used as a modifier
 
-        if self.is_alt_pressed() != alt and (alt or not ignore_other_modifiers):
-            return False
+            if self.is_alt_pressed() != alt and (alt or not ignore_other_modifiers):
+                return False
 
-        if self.is_ctrl_pressed() != ctrl and (ctrl or not ignore_other_modifiers):
-            return False
+            if self.is_ctrl_pressed() != ctrl and (ctrl or not ignore_other_modifiers):
+                return False
 
-        if self.is_shift_pressed() != shift and (shift or not ignore_other_modifiers):
-            return False
+            if self.is_shift_pressed() != shift and (shift or not ignore_other_modifiers):
+                return False
 
-        if self.is_win_pressed() != win and (win or not ignore_other_modifiers):
-            return False
+            if self.is_win_pressed() != win and (win or not ignore_other_modifiers):
+                return False
 
-        if self.is_esc_pressed() != esc and (esc or not ignore_other_modifiers):
-            return False
+            if self.is_esc_pressed() != esc and (esc or not ignore_other_modifiers):
+                return False
 
-        if self.is_caps_pressed() != caps and (caps or not ignore_other_modifiers):
-            return False
+            if self.is_caps_pressed() != caps and (caps or not ignore_other_modifiers):
+                return False
 
         return True
 
     def is_alt_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_LEFTALT) or self.is_key_pressed(ecodes.KEY_RIGHTALT)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_LEFTALT) or self.is_key_pressed(ecodes.KEY_RIGHTALT)
 
     def is_ctrl_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_LEFTCTRL) or self.is_key_pressed(ecodes.KEY_RIGHTCTRL)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_LEFTCTRL) or self.is_key_pressed(ecodes.KEY_RIGHTCTRL)
 
     def is_shift_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_LEFTSHIFT) or self.is_key_pressed(ecodes.KEY_RIGHTSHIFT)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_LEFTSHIFT) or self.is_key_pressed(ecodes.KEY_RIGHTSHIFT)
 
     def is_win_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_LEFTMETA) or self.is_key_pressed(ecodes.KEY_RIGHTMETA)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_LEFTMETA) or self.is_key_pressed(ecodes.KEY_RIGHTMETA)
 
     def is_esc_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_ESC)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_ESC)
 
     def is_caps_pressed(self):
-        return self.is_key_pressed(ecodes.KEY_CAPSLOCK)
+        with self.__lock:
+            return self.is_key_pressed(ecodes.KEY_CAPSLOCK)
 
     def matches_key(self,
                     ev: evdev.InputEvent,
@@ -613,33 +629,34 @@ class SimpleRemapper():
                     expected_modifiers: Optional[str] = None,
                     predecate: Callable[[], bool] = None,
                     *, ignore_other_modifiers=False) -> bool:
-        if isinstance(expected_keys, int):
-            if ev.code != expected_keys:
-                return False
-        elif isinstance(expected_keys, Iterable):
-            if ev.code not in expected_keys:
-                return False
-        else:
-            raise ValueError(f'Invalid type of expected_keys: actual={expected_keys}')
+        with self.__lock:
+            if isinstance(expected_keys, int):
+                if ev.code != expected_keys:
+                    return False
+            elif isinstance(expected_keys, Iterable):
+                if ev.code not in expected_keys:
+                    return False
+            else:
+                raise ValueError(f'Invalid type of expected_keys: actual={expected_keys}')
 
-        if isinstance(expected_values, int):
-            if ev.value != expected_values:
-                return False
-        elif isinstance(expected_values, Iterable):
-            if ev.value not in expected_values:
-                return False
-        else:
-            raise ValueError(f'Invalid type of expected_values: actual={expected_values}')
+            if isinstance(expected_values, int):
+                if ev.value != expected_values:
+                    return False
+            elif isinstance(expected_values, Iterable):
+                if ev.value not in expected_values:
+                    return False
+            else:
+                raise ValueError(f'Invalid type of expected_values: actual={expected_values}')
 
-        # If expected_modifiers is non-null, make sure these keys are pressed.
-        if expected_modifiers:
-            if not self.check_modifiers(expected_modifiers, ignore_other_modifiers=ignore_other_modifiers):
+            # If expected_modifiers is non-null, make sure these keys are pressed.
+            if expected_modifiers:
+                if not self.check_modifiers(expected_modifiers, ignore_other_modifiers=ignore_other_modifiers):
+                    return False
+
+            if predecate and not predecate():
                 return False
 
-        if predecate and not predecate():
-            return False
-
-        return True
+            return True
 
     def on_handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]) -> None:
         try:
