@@ -29,8 +29,7 @@ debug = False
 quiet = False
 
 # Uinput device name used by this instance.
-UINPUT_DEVICE_NAME_PREFIX = 'key-remapper-uinput-'
-UINPUT_DEVICE_NAME = f"{UINPUT_DEVICE_NAME_PREFIX}{int(time.time() * 1000) :020}-{random.randint(0, 1000000) :06}"
+UINPUT_DEVICE_NAME = 'key-remapper-uinput'
 
 
 MAIN_FILE_NANE = re.sub('''\..*?$''', "", os.path.basename(sys.argv[0]))
@@ -357,8 +356,8 @@ class BaseRemapper():
         id_matcher = re.compile(self.id_regex, re.IGNORECASE)
 
         for device in [evdev.InputDevice(path) for path in sorted(evdev.list_devices())]:
-            # Ignore uinput devices added after this instance.
-            if device.name.startswith(UINPUT_DEVICE_NAME_PREFIX) and device.name >= UINPUT_DEVICE_NAME:
+            # Ignore other key_remapper uinput devices.
+            if device.name.startswith(UINPUT_DEVICE_NAME):
                 continue
 
             id_info = f'v{device.info.vendor :04x} p{device.info.product :04x}'
@@ -672,8 +671,9 @@ class BaseRemapper():
 
         if self.write_to_uinput:
             # Create our /dev/uinput device.
-            uinput = UInput(name=UINPUT_DEVICE_NAME + self.uinput_device_name_suffix , events=self.__uinput_events)
-            if debug: print(f'# Uinput device name: {UINPUT_DEVICE_NAME}')
+            uinput_name = UINPUT_DEVICE_NAME + self.uinput_device_name_suffix
+            uinput = UInput(name=uinput_name, events=self.__uinput_events)
+            if debug: print(f'# Uinput device name: {uinput_name}')
             self.uinput = SyncedUinput(uinput)
             add_at_exit(self.uinput.close)
 
