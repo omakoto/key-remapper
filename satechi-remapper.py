@@ -35,7 +35,7 @@ class Remapper(key_remapper.BaseRemapper):
                 continue
 
             key = MAP[ev.code]
-            self.write_key_event(key, ev.value)
+            self.send_key_event(key, ev.value)
 
 
 def main(args):

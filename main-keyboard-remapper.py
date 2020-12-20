@@ -129,9 +129,10 @@ class Remapper(key_remapper.BaseRemapper):
         if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
 
         # Don't use capslock alone.
-        if ev.code == ecodes.KEY_CAPSLOCK: return # don't use capslock
+        if ev.code == ecodes.KEY_CAPSLOCK: return
 
-        self.write_key_event(ev.code, ev.value)
+        # Send the original event.
+        self.send_ievent(ev)
 
 
 def main(args):

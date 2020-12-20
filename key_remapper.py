@@ -462,11 +462,14 @@ class BaseRemapper():
 
         return True
 
-    def write_event(self, type: int, key: int, value: int) -> None:
+    def send_ievent(self, event: evdev.InputEvent) -> None:
+        self.send_keys(event.type, event.code, event.value)
+
+    def send_event(self, type: int, key: int, value: int) -> None:
         with self.__lock:
             self.uinput.write(evdev.InputEvent(0, 0, type, key, value))
 
-    def write_key_event(self, key: int, value: int) -> None:
+    def send_key_event(self, key: int, value: int) -> None:
         with self.__lock:
             self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value))
 
@@ -497,16 +500,16 @@ class BaseRemapper():
             shift = 's' in modifiers
             win = 'w' in modifiers
 
-            if alt: self.write_key_event(ecodes.KEY_LEFTALT, 1)
-            if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 1)
-            if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 1)
-            if win: self.write_key_event(ecodes.KEY_LEFTMETA, 1)
-            self.write_key_event(key, 1)
-            self.write_key_event(key, 0)
-            if win: self.write_key_event(ecodes.KEY_LEFTMETA, 0)
-            if shift: self.write_key_event(ecodes.KEY_LEFTSHIFT, 0)
-            if ctrl: self.write_key_event(ecodes.KEY_LEFTCTRL, 0)
-            if alt: self.write_key_event(ecodes.KEY_LEFTALT, 0)
+            if alt: self.send_key_event(ecodes.KEY_LEFTALT, 1)
+            if ctrl: self.send_key_event(ecodes.KEY_LEFTCTRL, 1)
+            if shift: self.send_key_event(ecodes.KEY_LEFTSHIFT, 1)
+            if win: self.send_key_event(ecodes.KEY_LEFTMETA, 1)
+            self.send_key_event(key, 1)
+            self.send_key_event(key, 0)
+            if win: self.send_key_event(ecodes.KEY_LEFTMETA, 0)
+            if shift: self.send_key_event(ecodes.KEY_LEFTSHIFT, 0)
+            if ctrl: self.send_key_event(ecodes.KEY_LEFTCTRL, 0)
+            if alt: self.send_key_event(ecodes.KEY_LEFTALT, 0)
 
             if done:
                 raise DoneEvent()
@@ -516,11 +519,11 @@ class BaseRemapper():
             for k in keys:
                 self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
 
-    def get_out_key_state(self, key: int) -> int:
-        return self.uinput.get_key_state(key)
-
     def reset_all_keys(self) -> None:
         self.uinput.reset()
+
+    def get_out_key_state(self, key: int) -> int:
+        return self.uinput.get_key_state(key)
 
     def get_in_key_state(self, key: int) -> int:
         with self.__lock:

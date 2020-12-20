@@ -75,7 +75,7 @@ class Remapper(key_remapper.BaseRemapper):
 
             ev.value = int(value)
 
-        self.write_event(ev.type, ev.code, ev.value)
+        self.send_event(ev.type, ev.code, ev.value)
 
 
 def main(args):
