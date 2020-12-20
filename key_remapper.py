@@ -403,7 +403,6 @@ class BaseRemapper():
 
         # We just opened the devices, so drain all udev monitor events.
         if self.__udev_monitor:
-            # Drain all udev events.
             self.__udev_monitor.readlines()
 
         if self.__devices:
@@ -426,7 +425,6 @@ class BaseRemapper():
         # clients don't race.
         glib.timeout_add(random.uniform(1, 2) * 1000, call_refresh)
 
-    # @die_on_exception
     def __on_udev_event(self, udev_monitor: TextIO, condition):
         refresh_devices = False
         for event in udev_monitor.readlines():  # drain all the events
@@ -442,7 +440,6 @@ class BaseRemapper():
 
         return True
 
-    # @die_on_exception
     def __on_input_event(self, device: evdev.InputDevice, condition):
         events = []
         for ev in device.read():
@@ -463,7 +460,7 @@ class BaseRemapper():
         return True
 
     def send_ievent(self, event: evdev.InputEvent) -> None:
-        self.send_keys(event.type, event.code, event.value)
+        self.send_event(event.type, event.code, event.value)
 
     def send_event(self, type: int, key: int, value: int) -> None:
         with self.__lock:
@@ -473,11 +470,13 @@ class BaseRemapper():
         with self.__lock:
             self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, key, value))
 
+    def send_key_events(self, *keys: Tuple[int, int]) -> None:
+        with self.__lock:
+            for k in keys:
+                self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
+
     def press_key(self, key: int, modifiers:str=None, *, reset_all_keys=True, done=False) -> None:
         with self.__lock:
-            if debug:
-                print(f'Press: f{evdev.InputEvent(0, 0, ecodes.EV_KEY, key, 1)}')
-
             # If modifier is "*", don't reset the key state, to allow combining with other modifiers.
             if modifiers == "*":
                 reset_all_keys = False
@@ -514,11 +513,6 @@ class BaseRemapper():
             if done:
                 raise DoneEvent()
 
-    def send_keys(self, keys: List[Tuple[int, int]]) -> None:
-        with self.__lock:
-            for k in keys:
-                self.uinput.write(evdev.InputEvent(0, 0, ecodes.EV_KEY, k[0], k[1]))
-
     def reset_all_keys(self) -> None:
         self.uinput.reset()
 
@@ -537,8 +531,7 @@ class BaseRemapper():
         with self.__lock:
             if modifiers is None:
                 modifiers = ""
-
-            if self.__extended_modifier_char_validator.search(modifiers):
+            elif self.__extended_modifier_char_validator.search(modifiers):
                 raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s, w, e and p.')
 
             alt = 'a' in modifiers

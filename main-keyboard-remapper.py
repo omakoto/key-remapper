@@ -6,8 +6,9 @@ import os
 import sys
 
 import evdev
+from evdev import ecodes
+
 import key_remapper
-from evdev import ecodes, InputEvent
 
 NAME = "Main Keyboard Remapper"
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -56,10 +57,17 @@ class Remapper(key_remapper.BaseRemapper):
 
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
-            # These 8 keys send KEY_1 .. KEY_8 (per my configurtion).
+            # These 8 keys send KEY_1 .. KEY_8, per my configuration.
             # Convert them into Shift+Ctrl+KEY
-            if ecodes.KEY_1 <= ev.code <= ecodes.KEY_8 and ev.value == 1:
-                self.press_key(ev.code, 'cs')
+            if ev.value == 1:
+                self.send_key_events(
+                    (ecodes.KEY_LEFTSHIFT, 1),
+                    (ecodes.KEY_LEFTCTRL, 1))
+            self.send_ievent(ev)
+            if ev.value == 0:
+                self.send_key_events(
+                    (ecodes.KEY_LEFTSHIFT, 0),
+                    (ecodes.KEY_LEFTCTRL, 0))
             return
 
         # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
