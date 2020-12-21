@@ -129,9 +129,8 @@ class Remapper(key_remapper.BaseRemapper):
         self.wheeler.stop()
 
     def is_chrome(self):
-        active_window = self.get_active_window()
-        cls = active_window[1]
-        return cls == "Google-chrome"
+        title, class_group_name, class_instance_name = self.get_active_window()
+        return class_group_name == "Google-chrome"
 
     def on_handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
         if ev.type != ec.EV_KEY:
@@ -174,7 +173,8 @@ class Remapper(key_remapper.BaseRemapper):
                 self.pending_esc_press = False
                 self.press_key(ec.KEY_ESC, reset_all_keys=False, done=True)
         else:
-            # In order to allow combos like "ALT+ESC", don't clear pending ESC when modifier keys are pressed.
+            # In order to allow combos like "ESC+ctrl+Backspace", don't clear pending ESC when modifier keys
+            # are pressed.
             if ev.code not in (
                     ec.KEY_LEFTALT, ec.KEY_RIGHTALT,
                     ec.KEY_LEFTCTRL, ec.KEY_RIGHTCTRL,
@@ -196,7 +196,7 @@ class Remapper(key_remapper.BaseRemapper):
 
         # Global keys -----------------------------------------------------------------------------------
 
-        # Convert ESC + Function key to ALT+SHIFT+CTRL+META + Function key, for versatile shortcuts.
+        # Convert ESC + Function key to ALT+SHIFT+CTRL+META + Function key. I use them to launch apps.
         if self.matches_key(ev, VERSATILE_KEYS, 1, 'e'): self.press_key(ev.code, 'acsw', done=True)
 
         # ESC + home/end -> ATL+Left/Right (back / forward)
