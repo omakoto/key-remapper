@@ -50,6 +50,8 @@ use the `-i` option.
    - The Thinkpad Internal keyboard (at least for X1 carbon gen7 and P1 gen2)
    - Topre Realforce
    - https://www.amazon.com/gp/product/B00EZ4A2OQ
+   - Adds various shortcuts using `ESC` and `Capslock`.
+   - Creates an extra uinput device to injcet mouse wheel events.
 
  - [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
  - [trackpoint-speedup.py](trackpoint-speedup.py) Speed up Thinkpad trackpoint.

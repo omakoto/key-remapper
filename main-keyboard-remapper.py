@@ -4,6 +4,8 @@
 #
 import os
 import sys
+import threading
+import time
 
 import evdev
 from evdev import ecodes
@@ -37,11 +39,94 @@ VERSATILE_KEYS = (
     ecodes.KEY_ENTER,
 )
 
+class Wheeler:
+    """Send mouse wheel events periodically
+    """
+    def __init__(self, uinput: key_remapper.SyncedUinput):
+        self.__lock = threading.Lock()
+
+        self.uinput:key_remapper.SyncedUinput = uinput
+
+        self.__wheel_thread = threading.Thread(name='wheel-thread', target=self.__do_wheel)
+        self.__wheel_thread.setDaemon(True)
+
+        self.__event = threading.Event()
+
+        self.__vwheel_speed = 0  # Vertical wheel speed and direction: ..., -1, 0, 1, ....
+        self.__hwheel_speed = 0  # Vertical wheel speed and direction: ..., -1, 0, 1, ....
+
+        self.wheel_repeat_delay_normal_ms = 0.020
+        self.wheel_repeat_delay_fast_ms = 0.005
+        self.wheel_make_fast_after_this_many_events = 10
+
+    def __do_wheel(self):
+        # Inject
+        #Event: time 1608522295.791450, type 2 (EV_REL), code 8 (REL_WHEEL), value -1
+        #Event: time 1608522295.791450, type 2 (EV_REL), code 11 (REL_WHEEL_HI_RES), value -120
+
+        consecutive_event_count = 0
+        while True:
+            vspeed = 0
+            hspeed = 0
+            with self.__lock:
+                vspeed = self.__vwheel_speed
+                hspeed = self.__hwheel_speed
+
+            if False:
+                print(f'# wheel: {vspeed} - {hspeed}')
+
+            if vspeed != 0:
+                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_WHEEL, vspeed)
+                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_WHEEL_HI_RES, vspeed * 120)
+            if hspeed != 0:
+                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_HWHEEL, hspeed)
+                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_HWHEEL_HI_RES, hspeed * 120)
+
+            if vspeed == 0 and hspeed == 0:
+                consecutive_event_count = 0
+                self.__event.wait()
+                self.__event.clear()
+            else:
+                consecutive_event_count += 1
+
+            delay = self.wheel_repeat_delay_normal_ms
+            if consecutive_event_count > self.wheel_make_fast_after_this_many_events:
+                delay = self.wheel_repeat_delay_fast_ms
+            time.sleep(delay)
+
+    def start(self):
+        self.__wheel_thread.start()
+
+    def set_vwheel(self, speed: int):
+        if debug: print(f'# vwheel: {speed}')
+        with self.__lock:
+            self.__vwheel_speed = speed
+        self.__event.set()
+
+    def set_hwheel(self, speed: int):
+        if debug: print(f'# hwheel: {speed}')
+        with self.__lock:
+            self.__hwheel_speed = speed
+        self.__event.set()
+
+    def stop(self):
+        self.set_vwheel(0)
+        self.set_hwheel(0)
 
 class Remapper(key_remapper.BaseRemapper):
     def __init__(self):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
         self.pending_esc_press = False
+
+        self.wheeler = Wheeler(self.new_mouse_uinput("_wheel"))
+
+    def on_initialize(self):
+        super().on_initialize()
+        self.wheeler.start()
+
+    def on_device_lost(self):
+        super().on_device_lost()
+        self.wheeler.stop()
 
     def is_chrome(self):
         active_window = self.get_active_window()
@@ -111,12 +196,6 @@ class Remapper(key_remapper.BaseRemapper):
 
         # Global keys -----------------------------------------------------------------------------------
 
-        # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
-        if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, "*", done=True)
-        if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, "*", done=True)
-        if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, "*", done=True)
-        if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, "*", done=True)
-
         # Convert ESC + Function key to ALT+SHIFT+CTRL+META + Function key, for versatile shortcuts.
         if self.matches_key(ev, VERSATILE_KEYS, 1, 'e'): self.press_key(ev.code, 'acsw', done=True)
 
@@ -135,6 +214,30 @@ class Remapper(key_remapper.BaseRemapper):
 
         # ESC + caps lock -> caps lock, in case I ever need it.
         if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
+
+        # # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
+        # if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, "*", done=True)
+        # if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, "*", done=True)
+        # if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, "*", done=True)
+        # if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, "*", done=True)
+
+        # ESC + H / J / K / L -> emulate wheel.
+        if self.matches_key(ev, (ecodes.KEY_J, ecodes.KEY_K), (1, 0), 'e', ignore_other_modifiers=True):
+            if ev.value == 0:
+                self.wheeler.set_vwheel(0)
+            elif ev.code == ecodes.KEY_K:
+                self.wheeler.set_vwheel(1)
+            elif ev.code == ecodes.KEY_J:
+                self.wheeler.set_vwheel(-1)
+            return
+        if self.matches_key(ev, (ecodes.KEY_L, ecodes.KEY_H), (1, 0), 'e', ignore_other_modifiers=True):
+            if ev.value == 0:
+                self.wheeler.set_hwheel(0)
+            elif ev.code == ecodes.KEY_L:
+                self.wheeler.set_hwheel(1)
+            elif ev.code == ecodes.KEY_H:
+                self.wheeler.set_hwheel(-1)
+            return
 
         # Don't use capslock alone.
         if ev.code == ecodes.KEY_CAPSLOCK: return

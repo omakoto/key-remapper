@@ -147,6 +147,9 @@ class SyncedUinput:
     def __str__(self) -> str:
         return f'SyncedUinput[{self.wrapped}]'
 
+    def send_event(self, type: int, key: int, value: int) -> None:
+        with self.__lock:
+            self.write(evdev.InputEvent(0, 0, type, key, value))
 
 class TaskTrayIcon:
     def __init__(self, name, icon_path):
@@ -259,7 +262,6 @@ class BaseRemapper():
         self.__devices = {}
         self.tray_icon = RemapperTrayIcon(self.remapper_name, self.remapper_icon)
         self.__refresh_scheduled = False
-        self.__uinput_events = uinput_events
         self.__modifier_char_validator = re.compile('''[^ascw]''')
         self.__extended_modifier_char_validator = re.compile('''[^ascwes]''')
 
@@ -270,6 +272,16 @@ class BaseRemapper():
         self.__notification.update(self.remapper_name, message)
         self.__notification.set_timeout(timeout_ms)
         self.__notification.show()
+
+    def uinput_events_add_all_keys_events(self, uinput_events:Optional[Dict[int, Iterable[int]]]=None) \
+            -> Dict[int, Iterable[int]]:
+        """
+        Add all KEY_ and BTN_ events to a uinput event dictionary.
+        """
+        if uinput_events is None:
+            uinput_events = {}
+        uinput_events[ecodes.EV_KEY] = ecodes.keys.keys()
+        return uinput_events
 
     def on_initialize(self):
         pass
@@ -416,6 +428,7 @@ class BaseRemapper():
 
         def call_refresh():
             self.__refresh_scheduled = False
+            self.on_device_lost()
             self.__open_devices()
             return False
 
@@ -663,6 +676,30 @@ class BaseRemapper():
     def on_arguments_parsed(self, args):
         pass
 
+    def new_uintput(self, name_suffix: str, uinput_events=Optional[Dict[int, Iterable[int]]]) -> SyncedUinput:
+        # Create a new uinput device with arbitrary events.
+        uinput_name = UINPUT_DEVICE_NAME + self.uinput_device_name_suffix + name_suffix
+        uinput = UInput(name=uinput_name, events=uinput_events)
+        if debug: print(f'# New uinput device name: {uinput_name}')
+        uinput = SyncedUinput(uinput)
+        add_at_exit(uinput.close)
+        return uinput
+
+    def new_keyboard_uinput(self, name_suffix: str) -> SyncedUinput:
+        # Create a new uinput device with keyboard events.
+        return self.new_uintput(name_suffix, None)
+
+    def new_mouse_uinput(self, name_suffix: str) -> SyncedUinput:
+        # Create a new uinput device with mouse events.
+        events = {}
+        events[ecodes.EV_KEY] = (ecodes.BTN_LEFT, ecodes.BTN_MIDDLE, ecodes.BTN_RIGHT, ecodes.BTN_SIDE,
+                                 ecodes.BTN_EXTRA, ecodes.BTN_BACK, ecodes.BTN_FORWARD)
+        events[ecodes.EV_REL] = (ecodes.REL_X, ecodes.REL_Y,
+                                 ecodes.REL_WHEEL, ecodes.REL_HWHEEL,
+                                 ecodes.REL_WHEEL_HI_RES, ecodes.REL_HWHEEL_HI_RES,
+                                 )
+        return self.new_uintput(name_suffix, events)
+
     def main(self, args):
         ensure_singleton(self.global_lock_name)
         notify2.init(self.remapper_name)
@@ -671,12 +708,7 @@ class BaseRemapper():
 
         if self.write_to_uinput:
             # Create our /dev/uinput device.
-            uinput_name = UINPUT_DEVICE_NAME + self.uinput_device_name_suffix
-            uinput = UInput(name=uinput_name, events=self.__uinput_events)
-            if debug: print(f'# Uinput device name: {uinput_name}')
-            self.uinput = SyncedUinput(uinput)
-            add_at_exit(self.uinput.close)
-
+            self.uinput = self.new_uintput("", self.uinput_events)
         self.__start_udev_monitor()
         glib.io_add_watch(self.__udev_monitor, glib.IO_IN, self.__on_udev_event)
 
