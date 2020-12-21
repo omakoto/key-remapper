@@ -456,6 +456,10 @@ class BaseRemapper():
         events = []
         for ev in device.read():
             events.append(ev)
+
+        events = self.on_preprocess_events(device, events)
+
+        for ev in events:
             with self.__lock:
                 self.__orig_key_states[ev.code] = ev.value
 
@@ -632,6 +636,13 @@ class BaseRemapper():
                 return False
 
             return True
+
+    def on_preprocess_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]) -> List[evdev.InputEvent]:
+        """
+        Called before the incoming inputs are stored in the internal states used by get_in_key_state() and
+        other is_*() methods.
+        """
+        return events
 
     def on_handle_events(self, device: evdev.InputDevice, events: List[evdev.InputEvent]) -> None:
         try:
