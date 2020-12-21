@@ -8,7 +8,7 @@ import threading
 import time
 
 import evdev
-from evdev import ecodes
+from evdev import ecodes as ec
 
 import key_remapper
 
@@ -24,19 +24,19 @@ DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforc
 debug = False
 
 VERSATILE_KEYS = (
-    ecodes.KEY_F1,
-    ecodes.KEY_F2,
-    ecodes.KEY_F3,
-    ecodes.KEY_F4,
-    ecodes.KEY_F5,
-    ecodes.KEY_F6,
-    ecodes.KEY_F7,
-    ecodes.KEY_F8,
-    ecodes.KEY_F9,
-    ecodes.KEY_F10,
-    ecodes.KEY_F11,
-    ecodes.KEY_F12,
-    ecodes.KEY_ENTER,
+    ec.KEY_F1,
+    ec.KEY_F2,
+    ec.KEY_F3,
+    ec.KEY_F4,
+    ec.KEY_F5,
+    ec.KEY_F6,
+    ec.KEY_F7,
+    ec.KEY_F8,
+    ec.KEY_F9,
+    ec.KEY_F10,
+    ec.KEY_F11,
+    ec.KEY_F12,
+    ec.KEY_ENTER,
 )
 
 class Wheeler:
@@ -76,11 +76,11 @@ class Wheeler:
                 print(f'# wheel: {vspeed} - {hspeed}')
 
             if vspeed != 0:
-                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_WHEEL, vspeed)
-                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_WHEEL_HI_RES, vspeed * 120)
+                self.uinput.send_event(ec.EV_REL, ec.REL_WHEEL, vspeed)
+                self.uinput.send_event(ec.EV_REL, ec.REL_WHEEL_HI_RES, vspeed * 120)
             if hspeed != 0:
-                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_HWHEEL, hspeed)
-                self.uinput.send_event(ecodes.EV_REL, ecodes.REL_HWHEEL_HI_RES, hspeed * 120)
+                self.uinput.send_event(ec.EV_REL, ec.REL_HWHEEL, hspeed)
+                self.uinput.send_event(ec.EV_REL, ec.REL_HWHEEL_HI_RES, hspeed * 120)
 
             if vspeed == 0 and hspeed == 0:
                 consecutive_event_count = 0
@@ -134,7 +134,7 @@ class Remapper(key_remapper.BaseRemapper):
         return cls == "Google-chrome"
 
     def on_handle_event(self, device: evdev.InputDevice, ev: evdev.InputEvent):
-        if ev.type != ecodes.EV_KEY:
+        if ev.type != ec.EV_KEY:
             return
 
         is_thinkpad = device.name.startswith('AT')
@@ -146,24 +146,24 @@ class Remapper(key_remapper.BaseRemapper):
             # Convert them into Shift+Ctrl+KEY
             if ev.value == 1:
                 self.send_key_events(
-                    (ecodes.KEY_LEFTSHIFT, 1),
-                    (ecodes.KEY_LEFTCTRL, 1))
+                    (ec.KEY_LEFTSHIFT, 1),
+                    (ec.KEY_LEFTCTRL, 1))
             self.send_ievent(ev)
             if ev.value == 0:
                 self.send_key_events(
-                    (ecodes.KEY_LEFTSHIFT, 0),
-                    (ecodes.KEY_LEFTCTRL, 0))
+                    (ec.KEY_LEFTSHIFT, 0),
+                    (ec.KEY_LEFTCTRL, 0))
             return
 
         # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
         if is_thinkpad:
-            if ev.code == ecodes.KEY_INSERT and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEUP
-            elif ev.code == ecodes.KEY_DELETE and not self.is_caps_pressed(): ev.code = ecodes.KEY_PAGEDOWN
+            if ev.code == ec.KEY_INSERT and not self.is_caps_pressed(): ev.code = ec.KEY_PAGEUP
+            elif ev.code == ec.KEY_DELETE and not self.is_caps_pressed(): ev.code = ec.KEY_PAGEDOWN
 
         # Special ESC handling: Don't send "ESC-press" at key-down, but instead send it on key-*up*, unless
         # any keys are pressed between the down and up.
         # This allows to make "ESC + BACKSPACE" act as a DEL press without sending ESC.
-        if ev.code == ecodes.KEY_ESC:
+        if ev.code == ec.KEY_ESC:
             if ev.value == 1:
                 self.pending_esc_press = True
             if ev.value in (1, 2):
@@ -172,27 +172,27 @@ class Remapper(key_remapper.BaseRemapper):
             # Here, ev.value must be 0.
             if self.pending_esc_press:
                 self.pending_esc_press = False
-                self.press_key(ecodes.KEY_ESC, reset_all_keys=False, done=True)
+                self.press_key(ec.KEY_ESC, reset_all_keys=False, done=True)
         else:
             # In order to allow combos like "ALT+ESC", don't clear pending ESC when modifier keys are pressed.
             if ev.code not in (
-                    ecodes.KEY_LEFTALT, ecodes.KEY_RIGHTALT,
-                    ecodes.KEY_LEFTCTRL, ecodes.KEY_RIGHTCTRL,
-                    ecodes.KEY_LEFTSHIFT, ecodes.KEY_RIGHTSHIFT,
-                    ecodes.KEY_LEFTMETA, ecodes.KEY_RIGHTMETA,
-                    ecodes.KEY_CAPSLOCK
+                    ec.KEY_LEFTALT, ec.KEY_RIGHTALT,
+                    ec.KEY_LEFTCTRL, ec.KEY_RIGHTCTRL,
+                    ec.KEY_LEFTSHIFT, ec.KEY_RIGHTSHIFT,
+                    ec.KEY_LEFTMETA, ec.KEY_RIGHTMETA,
+                    ec.KEY_CAPSLOCK
             ):
                 self.pending_esc_press = False
 
         # ESC (or shift) + backspace -> delete
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_DELETE, done=True)
-        if self.matches_key(ev, ecodes.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ecodes.KEY_DELETE, done=True)
+        if self.matches_key(ev, ec.KEY_BACKSPACE, (1, 2), 'e'): self.press_key(ec.KEY_DELETE, done=True)
+        if self.matches_key(ev, ec.KEY_BACKSPACE, (1, 2), 's'): self.press_key(ec.KEY_DELETE, done=True)
 
         # For chrome: -----------------------------------------------------------------------------------
         #  F5 -> back
         #  F6 -> forward
-        if self.matches_key(ev, ecodes.KEY_F5, 1, '', self.is_chrome): self.press_key(ecodes.KEY_BACK, done=True)
-        if self.matches_key(ev, ecodes.KEY_F6, 1, '', self.is_chrome): self.press_key(ecodes.KEY_FORWARD, done=True)
+        if self.matches_key(ev, ec.KEY_F5, 1, '', self.is_chrome): self.press_key(ec.KEY_BACK, done=True)
+        if self.matches_key(ev, ec.KEY_F6, 1, '', self.is_chrome): self.press_key(ec.KEY_FORWARD, done=True)
 
         # Global keys -----------------------------------------------------------------------------------
 
@@ -200,47 +200,47 @@ class Remapper(key_remapper.BaseRemapper):
         if self.matches_key(ev, VERSATILE_KEYS, 1, 'e'): self.press_key(ev.code, 'acsw', done=True)
 
         # ESC + home/end -> ATL+Left/Right (back / forward)
-        if self.matches_key(ev, ecodes.KEY_HOME, 1, 'e'): self.press_key(ecodes.KEY_LEFT, 'a', done=True)
-        if self.matches_key(ev, ecodes.KEY_END, 1, 'e'): self.press_key(ecodes.KEY_RIGHT, 'a', done=True)
+        if self.matches_key(ev, ec.KEY_HOME, 1, 'e'): self.press_key(ec.KEY_LEFT, 'a', done=True)
+        if self.matches_key(ev, ec.KEY_END, 1, 'e'): self.press_key(ec.KEY_RIGHT, 'a', done=True)
 
         # ESC + space -> page up. (for chrome and also in-process browser, such as Markdown Preview in vs code)
-        if self.matches_key(ev, ecodes.KEY_SPACE, (1, 2), 'e'): self.press_key(ecodes.KEY_PAGEUP, done=True)
+        if self.matches_key(ev, ec.KEY_SPACE, (1, 2), 'e'): self.press_key(ec.KEY_PAGEUP, done=True)
 
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
         # (meaning ESC + ins/del act as them too on thinkpad.)
-        if self.matches_key(ev, ecodes.KEY_PAGEUP, 1, 'e'): self.press_key(ecodes.KEY_PAGEUP, 'c', done=True)
-        if self.matches_key(ev, ecodes.KEY_PAGEDOWN, 1, 'e'): self.press_key(ecodes.KEY_PAGEDOWN, 'c', done=True)
+        if self.matches_key(ev, ec.KEY_PAGEUP, 1, 'e'): self.press_key(ec.KEY_PAGEUP, 'c', done=True)
+        if self.matches_key(ev, ec.KEY_PAGEDOWN, 1, 'e'): self.press_key(ec.KEY_PAGEDOWN, 'c', done=True)
 
         # ESC + caps lock -> caps lock, in case I ever need it.
-        if self.matches_key(ev, ecodes.KEY_CAPSLOCK, 1, 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_CAPSLOCK, done=True)
+        if self.matches_key(ev, ec.KEY_CAPSLOCK, 1, 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_CAPSLOCK, done=True)
 
         # # ESC + H / J / K / L -> LEFT, DOWN, UP, RIGHT
-        # if self.matches_key(ev, ecodes.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_LEFT, "*", done=True)
-        # if self.matches_key(ev, ecodes.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_DOWN, "*", done=True)
-        # if self.matches_key(ev, ecodes.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_UP, "*", done=True)
-        # if self.matches_key(ev, ecodes.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ecodes.KEY_RIGHT, "*", done=True)
+        # if self.matches_key(ev, ec.KEY_H, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_LEFT, "*", done=True)
+        # if self.matches_key(ev, ec.KEY_J, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_DOWN, "*", done=True)
+        # if self.matches_key(ev, ec.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_UP, "*", done=True)
+        # if self.matches_key(ev, ec.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_RIGHT, "*", done=True)
 
-        # ESC + H / J / K / L -> emulate wheel.
-        if self.matches_key(ev, (ecodes.KEY_J, ecodes.KEY_K), (1, 0), 'e', ignore_other_modifiers=True):
+        # ESC + H / J / K / L / W / X -> emulate wheel.
+        if self.matches_key(ev, (ec.KEY_J, ec.KEY_K, ec.KEY_W, ec.KEY_X), (1, 0), 'e', ignore_other_modifiers=True):
             if ev.value == 0:
                 self.wheeler.set_vwheel(0)
-            elif ev.code == ecodes.KEY_K:
+            elif ev.code in (ec.KEY_K, ec.KEY_W): # Scroll down
                 self.wheeler.set_vwheel(1)
-            elif ev.code == ecodes.KEY_J:
+            elif ev.code in (ec.KEY_J, ec.KEY_X): # Scroll up
                 self.wheeler.set_vwheel(-1)
             return
-        if self.matches_key(ev, (ecodes.KEY_L, ecodes.KEY_H), (1, 0), 'e', ignore_other_modifiers=True):
+        if self.matches_key(ev, (ec.KEY_L, ec.KEY_H), (1, 0), 'e', ignore_other_modifiers=True):
             if ev.value == 0:
                 self.wheeler.set_hwheel(0)
-            elif ev.code == ecodes.KEY_L:
+            elif ev.code == ec.KEY_L: # Scroll right
                 self.wheeler.set_hwheel(1)
-            elif ev.code == ecodes.KEY_H:
+            elif ev.code == ec.KEY_H: # Scroll left
                 self.wheeler.set_hwheel(-1)
             return
 
         # Don't use capslock alone.
-        if ev.code == ecodes.KEY_CAPSLOCK: return
+        if ev.code == ec.KEY_CAPSLOCK: return
 
         # Send the original event.
         self.send_ievent(ev)
