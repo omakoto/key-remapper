@@ -155,9 +155,9 @@ class Remapper(key_remapper.BaseRemapper):
             return
 
         # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
-        if is_thinkpad:
-            if ev.code == ec.KEY_INSERT and not self.is_caps_pressed(): ev.code = ec.KEY_PAGEUP
-            elif ev.code == ec.KEY_DELETE and not self.is_caps_pressed(): ev.code = ec.KEY_PAGEDOWN
+        if is_thinkpad and not self.is_caps_pressed():
+            if ev.code == ec.KEY_INSERT: ev.code = ec.KEY_PAGEUP
+            elif ev.code == ec.KEY_DELETE: ev.code = ec.KEY_PAGEDOWN
 
         # Special ESC handling: Don't send "ESC-press" at key-down, but instead send it on key-*up*, unless
         # any keys are pressed between the down and up.
