@@ -506,7 +506,7 @@ class BaseRemapper():
                 modifiers = ""
 
             if self.__modifier_char_validator.search(modifiers):
-                raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s and w.')
+                raise ValueError(f'`modifiers` "f{modifiers}" contains unexpected char. Expected a, c, s and w.')
 
             # TODO Maybe remember the previous state and restore, rather than the current "reset -> press modifilers
             # and later release them all" strategy.
@@ -548,7 +548,7 @@ class BaseRemapper():
             if modifiers is None:
                 modifiers = ""
             elif self.__extended_modifier_char_validator.search(modifiers):
-                raise ValueError(f'`modifiers` "f{modifiers}" ontains char. Expected a, c, s, w, e and p.')
+                raise ValueError(f'`modifiers` "f{modifiers}" contains unexpected char. Expected a, c, s, w, e and p.')
 
             alt = 'a' in modifiers
             ctrl = 'c' in modifiers

@@ -18,7 +18,7 @@ ICON = os.path.join(SCRIPT_PATH, 'res/keyboard.png')
 
 # AT Translated Set 2 keyboard -> thinkpad internal keyboard
 # Topre Corporation Realforce  -> Realforce
-# P. I. Engineering XK-16 HID  -> An external 8-key keyboards.
+# P. I. Engineering XK-16 HID  -> An external 8-key keyboard
 DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforce|P. I. Engineering XK-16 HID)"
 
 debug = False
