@@ -120,10 +120,9 @@ class Remapper(key_remapper.BaseRemapper):
         super().__init__(NAME, ICON, DEFAULT_DEVICE_NAME)
         self.pending_esc_press = False
 
-        self.wheeler = Wheeler(self.new_mouse_uinput("_wheel"))
-
     def on_initialize(self):
         super().on_initialize()
+        self.wheeler = Wheeler(self.new_mouse_uinput("_wheel"))
         self.wheeler.start()
 
     def on_device_lost(self):
