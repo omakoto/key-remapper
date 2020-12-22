@@ -205,9 +205,6 @@ class Remapper(key_remapper.BaseRemapper):
         if self.matches_key(ev, ec.KEY_HOME, 1, 'e'): self.press_key(ec.KEY_LEFT, 'a', done=True)
         if self.matches_key(ev, ec.KEY_END, 1, 'e'): self.press_key(ec.KEY_RIGHT, 'a', done=True)
 
-        # ESC + space -> page up. (for chrome and also in-process browser, such as Markdown Preview in vs code)
-        if self.matches_key(ev, ec.KEY_SPACE, (1, 2), 'e'): self.press_key(ec.KEY_PAGEUP, done=True)
-
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
         # (meaning ESC + ins/del act as them too on thinkpad.)
@@ -223,13 +220,13 @@ class Remapper(key_remapper.BaseRemapper):
         # if self.matches_key(ev, ec.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_UP, "*", done=True)
         # if self.matches_key(ev, ec.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_RIGHT, "*", done=True)
 
-        # ESC + H / J / K / L -> emulate wheel. Also support ESC+W/X for left-hand-only scrolling.
-        if self.matches_key(ev, (ec.KEY_J, ec.KEY_K, ec.KEY_W, ec.KEY_X), (1, 0), 'e', ignore_other_modifiers=True):
+        # ESC + H / J / K / L -> emulate wheel. Also support ESC+SPACE / C for left-hand-only scrolling.
+        if self.matches_key(ev, (ec.KEY_J, ec.KEY_K, ec.KEY_SPACE, ec.KEY_C), (1, 0), 'e', ignore_other_modifiers=True):
             if ev.value == 0:
                 self.wheeler.set_vwheel(0)
-            elif ev.code in (ec.KEY_K, ec.KEY_W): # Scroll down
+            elif ev.code in (ec.KEY_K, ec.KEY_C): # Scroll up
                 self.wheeler.set_vwheel(1)
-            elif ev.code in (ec.KEY_J, ec.KEY_X): # Scroll up
+            elif ev.code in (ec.KEY_J, ec.KEY_SPACE): # Scroll down
                 self.wheeler.set_vwheel(-1)
             return
         if self.matches_key(ev, (ec.KEY_L, ec.KEY_H), (1, 0), 'e', ignore_other_modifiers=True):
