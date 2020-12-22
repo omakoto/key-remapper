@@ -23,6 +23,8 @@ DEFAULT_DEVICE_NAME = "^(AT Translated Set 2 keyboard|Topre Corporation Realforc
 
 debug = False
 
+# ESC + These keys will generate SHIFT+ALT+CTRL+META+[THE KEY]. I launch apps using them -- e.g. ESC+ENTER to launch
+# Chrome.
 VERSATILE_KEYS = (
     ec.KEY_F1,
     ec.KEY_F2,
@@ -196,7 +198,7 @@ class Remapper(key_remapper.BaseRemapper):
 
         # Global keys -----------------------------------------------------------------------------------
 
-        # Convert ESC + Function key to ALT+SHIFT+CTRL+META + Function key. I use them to launch apps.
+        # See VERSATILE_KEYS.
         if self.matches_key(ev, VERSATILE_KEYS, 1, 'e'): self.press_key(ev.code, 'acsw', done=True)
 
         # ESC + home/end -> ATL+Left/Right (back / forward)
@@ -221,7 +223,7 @@ class Remapper(key_remapper.BaseRemapper):
         # if self.matches_key(ev, ec.KEY_K, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_UP, "*", done=True)
         # if self.matches_key(ev, ec.KEY_L, (1, 2), 'e', ignore_other_modifiers=True): self.press_key(ec.KEY_RIGHT, "*", done=True)
 
-        # ESC + H / J / K / L / W / X -> emulate wheel.
+        # ESC + H / J / K / L -> emulate wheel. Also support ESC+W/X for left-hand-only scrolling.
         if self.matches_key(ev, (ec.KEY_J, ec.KEY_K, ec.KEY_W, ec.KEY_X), (1, 0), 'e', ignore_other_modifiers=True):
             if ev.value == 0:
                 self.wheeler.set_vwheel(0)
