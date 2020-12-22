@@ -144,16 +144,22 @@ class Remapper(key_remapper.BaseRemapper):
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
             # These 8 keys send KEY_1 .. KEY_8, per my configuration.
-            # Convert them into Shift+Ctrl+KEY
+            # Convert them into Shift+Ctrl+Alt+Meta+KEY
             if ev.value == 1:
                 self.send_key_events(
                     (ec.KEY_LEFTSHIFT, 1),
-                    (ec.KEY_LEFTCTRL, 1))
+                    (ec.KEY_LEFTCTRL, 1),
+                    (ec.KEY_LEFTALT, 1),
+                    (ec.KEY_LEFTMETA, 1),
+                )
             self.send_ievent(ev)
             if ev.value == 0:
                 self.send_key_events(
                     (ec.KEY_LEFTSHIFT, 0),
-                    (ec.KEY_LEFTCTRL, 0))
+                    (ec.KEY_LEFTCTRL, 0),
+                    (ec.KEY_LEFTALT, 0),
+                    (ec.KEY_LEFTMETA, 0),
+                )
             return
 
         # Thinkpad only: Use ins/del as pageup/down, unless CAPS is pressed.
