@@ -7,9 +7,8 @@ import random
 import re
 import sys
 import threading
-import time
 import traceback
-from typing import Optional, Dict, List, TextIO, Tuple, Union, Collection, Iterable, Callable
+from typing import Optional, Dict, List, TextIO, Tuple, Union, Iterable, Callable
 
 import evdev
 import gi
@@ -140,6 +139,7 @@ class SyncedUinput:
 
     def close(self):
         with self.__lock:
+            self.reset()
             if self.wrapped:
                 self.wrapped.close()
                 self.wrapped = None
