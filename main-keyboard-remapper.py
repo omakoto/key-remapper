@@ -143,6 +143,11 @@ class Remapper(key_remapper.BaseRemapper):
 
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
+            # Special casing the first two keys.
+            if self.matches_key(ev, ec.KEY_1, 1, ''): self.press_key(ec.KEY_BACK, done=True)
+            if self.matches_key(ev, ec.KEY_2, 1, ''): self.press_key(ec.KEY_FORWARD, done=True)
+
+            # Default setting...
             # These 8 keys send KEY_1 .. KEY_8, per my configuration.
             # Convert them into Shift+Ctrl+Alt+Meta+KEY
             if ev.value == 1:
