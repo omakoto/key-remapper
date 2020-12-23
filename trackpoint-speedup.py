@@ -47,7 +47,7 @@ class Remapper(key_remapper.BaseRemapper):
 
     def on_init_arguments(self, parser):
         parser.add_argument('--threshold', type=int, default=2, metavar='T')
-        parser.add_argument('--add', type=float, default=2, metavar='V')
+        parser.add_argument('--add', type=float, default=0, metavar='V')
         parser.add_argument('--power', type=float, default=2.5, metavar='P')
         parser.add_argument('--scale', type=float, default=5, metavar='S')
 
