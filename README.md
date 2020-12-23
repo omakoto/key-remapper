@@ -7,7 +7,7 @@ Python framework for creating flexible key-remapping for Linux.
 
 ### Access to `/dev/input/*` and `/dev/uinput`
 
-```
+```sh
 # Add self to the input and uinput groups
 sudo usermod -aG input $USER 
 sudo groupadd uinput
@@ -28,7 +28,7 @@ See also:
 
 ### Python3 and modules
 
-```
+```sh
 sudo apt install -y python3 python3-pip
 sudo pip3 install evdev notify2
 ```
@@ -62,20 +62,19 @@ by the regex `DEFAULT_DEVICE_NAME` in them. To target all (keyboard) devices, st
 with `-m ''`. In order to distinguish different devices with the same name,
 use the `-i` option.
 
- - [main-keyboard-remapper.py](main-keyboard-remapper.py)
-   - For the following 3 keyboards:
-     - The Thinkpad Internal keyboard (at least for X1 carbon gen7 and P1 gen2)
-     - Topre Realforce
-     - https://www.amazon.com/gp/product/B00EZ4A2OQ
-    - Adds various shortcuts using `ESC` and `Capslock`.
-    - Creates an extra uinput device to inject mouse wheel events.
-      e.g. `ESC` + `H`, `J`, `K` and `L` for virtucal and horizontal scroll.
+- [main-keyboard-remapper.py](main-keyboard-remapper.py)
+  - For the following 3 keyboards:
+    - The Thinkpad Internal keyboard (at least for X1 carbon gen7 and P1 gen2)
+    - Topre Realforce
+    - https://www.amazon.com/gp/product/B00EZ4A2OQ
+  - Adds various shortcuts using `ESC` and `Capslock`.
+  - Creates an extra uinput device to inject mouse wheel events.
+    e.g. `ESC` + `H`, `J`, `K` and `L` for virtucal and horizontal scroll.
 
- - [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
- - [trackpoint-speedup.py](trackpoint-speedup.py) Speed up Thinkpad trackpoint.
+- [shortcut-remote-remapper.py](shortcut-remote-remapper.py) for https://www.amazon.com/gp/product/B01NC2LEYP
+- [trackpoint-speedup.py](trackpoint-speedup.py) Speed up Thinkpad trackpoint.
    I can never figure out how to easily do it.
- 
+
 ## See Also
- 
- - [python-evdev](https://python-evdev.readthedocs.io/en/latest/)
- 
+
+- [python-evdev](https://python-evdev.readthedocs.io/en/latest/) 
