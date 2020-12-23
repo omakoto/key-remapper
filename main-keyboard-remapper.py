@@ -62,9 +62,10 @@ class Wheeler:
         self.wheel_make_fast_after_this_many_events = 10
 
     def __do_wheel(self):
-        # Inject
-        #Event: time 1608522295.791450, type 2 (EV_REL), code 8 (REL_WHEEL), value -1
-        #Event: time 1608522295.791450, type 2 (EV_REL), code 11 (REL_WHEEL_HI_RES), value -120
+        # Inject mouse wheel events periodically.
+        # Example events:
+        # Event: time 1608522295.791450, type 2 (EV_REL), code 8 (REL_WHEEL), value -1
+        # Event: time 1608522295.791450, type 2 (EV_REL), code 11 (REL_WHEEL_HI_RES), value -120
 
         consecutive_event_count = 0
         while True:
