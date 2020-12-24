@@ -144,8 +144,8 @@ class Remapper(key_remapper.BaseRemapper):
         # For x-keys. Convert to Shift+Ctrl+[number]
         if is_xkeys:
             # Special casing the first two keys.
-            if self.matches_key(ev, ec.KEY_1, 1, ''): self.press_key(ec.KEY_BACK, done=True)
-            if self.matches_key(ev, ec.KEY_2, 1, ''): self.press_key(ec.KEY_FORWARD, done=True)
+            if self.matches_key(ev, ec.KEY_1, 1, ''): self.press_key(ec.KEY_LEFT, 'a', done=True)
+            if self.matches_key(ev, ec.KEY_2, 1, ''): self.press_key(ec.KEY_RIGHT, 'a', done=True)
 
             # Default setting...
             # These 8 keys send KEY_1 .. KEY_8, per my configuration.
