@@ -41,6 +41,35 @@ VERSATILE_KEYS = (
     ec.KEY_ENTER,
 )
 
+ALPHABET_KEYS = (
+    ec.KEY_A,
+    ec.KEY_B,
+    ec.KEY_C,
+    ec.KEY_D,
+    ec.KEY_E,
+    ec.KEY_F,
+    ec.KEY_G,
+    ec.KEY_H,
+    ec.KEY_I,
+    ec.KEY_J,
+    ec.KEY_K,
+    ec.KEY_L,
+    ec.KEY_M,
+    ec.KEY_N,
+    ec.KEY_O,
+    ec.KEY_P,
+    ec.KEY_Q,
+    ec.KEY_R,
+    ec.KEY_S,
+    ec.KEY_T,
+    ec.KEY_U,
+    ec.KEY_V,
+    ec.KEY_W,
+    ec.KEY_X,
+    ec.KEY_Y,
+    ec.KEY_Z,
+)
+
 class Wheeler:
     """Send mouse wheel events periodically
     """
@@ -215,6 +244,9 @@ class Remapper(key_remapper.BaseRemapper):
         # ESC + home/end -> ATL+Left/Right (back / forward)
         if self.matches_key(ev, ec.KEY_HOME, 1, 'e'): self.press_key(ec.KEY_LEFT, 'a', done=True)
         if self.matches_key(ev, ec.KEY_END, 1, 'e'): self.press_key(ec.KEY_RIGHT, 'a', done=True)
+
+        # ESC + alphabet -> ctrl + shift + the key.
+        if self.matches_key(ev, ALPHABET_KEYS, 1, 'e'): self.press_key(ev.code, 'cs', done=True)
 
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
