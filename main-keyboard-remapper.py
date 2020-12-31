@@ -245,9 +245,6 @@ class Remapper(key_remapper.BaseRemapper):
         if self.matches_key(ev, ec.KEY_HOME, 1, 'e'): self.press_key(ec.KEY_LEFT, 'a', done=True)
         if self.matches_key(ev, ec.KEY_END, 1, 'e'): self.press_key(ec.KEY_RIGHT, 'a', done=True)
 
-        # ESC + alphabet -> ctrl + shift + the key.
-        if self.matches_key(ev, ALPHABET_KEYS, 1, 'e'): self.press_key(ev.code, 'cs', done=True)
-
         # ESC + Pageup -> ctrl + pageup (prev tab)
         # ESC + Pagedown -> ctrl + pagedown (next tab)
         # (meaning ESC + ins/del act as them too on thinkpad.)
@@ -280,6 +277,9 @@ class Remapper(key_remapper.BaseRemapper):
             elif ev.code == ec.KEY_H: # Scroll left
                 self.wheeler.set_hwheel(-1)
             return
+
+        # ESC + other alphabet -> ctrl + shift + the key.
+        if self.matches_key(ev, ALPHABET_KEYS, 1, 'e'): self.press_key(ev.code, 'cs', done=True)
 
         # Don't use capslock alone.
         if ev.code == ec.KEY_CAPSLOCK: return
