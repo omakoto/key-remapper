@@ -136,8 +136,13 @@ class Remapper(key_remapper.BaseRemapper):
         half_toggle = (key & HALF_TOGGLE) != 0
         key = key & ~HALF_TOGGLE
 
-        if half_toggle or ev.value > 0:
-            self.press_key(key)
+        if half_toggle:
+            if ev.value not in (0, 1):
+                return
+        elif ev.value == 0:
+            return
+
+        self.press_key(key)
 
     def on_device_detected(self, devices: List[evdev.InputDevice]):
         self.show_help()
