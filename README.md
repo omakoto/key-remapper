@@ -3,6 +3,10 @@
 Python framework for creating flexible key-remapping for Linux.
 (In attempt to replicate AHK-like flexible remapping.)
 
+## Project Moving
+
+I'm rewriting it in Rust: https://github.com/omakoto/keyremapper-rs
+
 ## Prerequisite
 
 ### Access to `/dev/input/*` and `/dev/uinput`
